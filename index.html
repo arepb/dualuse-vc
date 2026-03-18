@@ -1515,6 +1515,9 @@
       { name: "BREAKING DEFENSE",url: "https://breakingdefense.com/feed/" },
       { name: "DEFENSE NEWS",    url: "https://www.defensenews.com/arc/outboundfeeds/rss/" },
       { name: "C4ISRNET",        url: "https://www.c4isrnet.com/arc/outboundfeeds/rss/" },
+      { name: "THE WAR ZONE",    url: "https://www.twz.com/feed" },
+      { name: "SOF WEEK",        url: "https://sofweek.org/feed/" },
+      { name: "SBIR / STTR",     url: "https://api.sbir.gov/public/api/awards?rows=8&start=0&sortField=awardDate&sortDir=DESC&agency=DOD", type: "json" },
     ];
 
     const CACHE_KEY = "dualuse_news_cache";
@@ -1560,6 +1563,31 @@
           }).filter(a => a.title && a.link);
         };
 
+        const parseSBIR = (raw) => {
+          if (!raw) return [];
+          try {
+            let str = raw;
+            if (typeof str === "string" && str.startsWith("data:")) {
+              str = atob(str.split(",")[1]);
+            }
+            const awards = JSON.parse(str);
+            const list = Array.isArray(awards) ? awards : (awards.data || awards.awards || []);
+            return list.slice(0, 6).map(a => {
+              const title = (a.award_title || a.awardsTitle || a.title || "SBIR Award").trim();
+              const company = (a.company || a.firm || a.awardee || "").trim();
+              const branch = (a.branch || a.agency || "").trim();
+              const label = [branch, company].filter(Boolean).join(" · ");
+              const id = a.award_id || a.awardId || a.id || "";
+              const link = id
+                ? `https://www.sbir.gov/sbirsearch/award/detail/${id}`
+                : "https://www.sbir.gov/awards";
+              const rawDate = a.award_date || a.awardDate || a.date || "";
+              const date = rawDate ? new Date(rawDate) : new Date(0);
+              return { title: label ? `${title} — ${label}` : title, link, date };
+            }).filter(a => a.title && a.link);
+          } catch(e) { return []; }
+        };
+
         const fetchFeed = async (feed) => {
           const controller = new AbortController();
           const timer = setTimeout(() => controller.abort(), 8000);
@@ -1570,7 +1598,10 @@
             );
             clearTimeout(timer);
             const data = await res.json();
-            return parseXML(data.contents).map(a => ({ ...a, source: feed.name }));
+            const articles = feed.type === "json"
+              ? parseSBIR(data.contents)
+              : parseXML(data.contents);
+            return articles.map(a => ({ ...a, source: feed.name }));
           } catch (e) {
             clearTimeout(timer);
             return [];
@@ -1581,7 +1612,7 @@
           const all = results.flat()
             .filter(a => a.title && a.link)
             .sort((a, b) => b.date - a.date)
-            .slice(0, 12);
+            .slice(0, 16);
           if (all.length > 0) {
             const now = Date.now();
             try {
