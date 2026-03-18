@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@1,700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      width: 1200px;
+      height: 630px;
+      overflow: hidden;
+      font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    .card {
+      width: 1200px;
+      height: 630px;
+      background: #d8d8d8;
+      display: grid;
+      grid-template-columns: 1fr 420px;
+      align-items: stretch;
+    }
+    .left {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 72px 72px 64px 88px;
+    }
+    .top { display: flex; flex-direction: column; gap: 0; }
+    .wordmark {
+      font-size: 136px;
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      line-height: 0.88;
+      color: #e00000;
+    }
+    .subtitle {
+      margin-top: 18px;
+      font-size: 22px;
+      font-weight: 700;
+      font-style: italic;
+      font-family: "IBM Plex Mono", "Courier New", monospace;
+      color: #444;
+      letter-spacing: 0.01em;
+    }
+    .bottom { display: flex; flex-direction: column; gap: 0; }
+    .rule { width: 100%; height: 4px; background: #000; margin-bottom: 28px; }
+    .stats { display: flex; gap: 48px; align-items: flex-end; }
+    .stat { display: flex; flex-direction: column; gap: 4px; }
+    .stat-num {
+      font-size: 40px; font-weight: 900;
+      letter-spacing: -0.03em; color: #000; line-height: 1;
+    }
+    .stat-label {
+      font-size: 10px; font-weight: 700;
+      letter-spacing: 0.2em; text-transform: uppercase; color: #888;
+    }
+    .domain {
+      margin-top: 16px;
+      font-size: 14px; font-weight: 700;
+      letter-spacing: 0.18em; text-transform: uppercase;
+      color: #000; opacity: 0.35;
+    }
+    /* Globe column */
+    .right {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+    canvas { display: block; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="left">
+      <div class="top">
+        <div class="wordmark">DUAL USE</div>
+        <div class="subtitle">Tracking venture capital investment in defense tech</div>
+      </div>
+      <div class="bottom">
+        <div class="rule"></div>
+        <div class="stats">
+          <div class="stat">
+            <div class="stat-num">$49.1B</div>
+            <div class="stat-label">VC funding in 2025</div>
+          </div>
+          <div class="stat">
+            <div class="stat-num">100</div>
+            <div class="stat-label">Startups tracked</div>
+          </div>
+          <div class="stat">
+            <div class="stat-num">25</div>
+            <div class="stat-label">VC funds</div>
+          </div>
+        </div>
+        <div class="domain">dualuse.vc</div>
+      </div>
+    </div>
+    <div class="right">
+      <canvas id="globe" width="420" height="630"></canvas>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('globe');
+    const ctx = canvas.getContext('2d');
+    const W = 420, H = 630;
+    const cx = W / 2, cy = H / 2;
+    const R = 235;
+
+    const TILT = 23.5 * Math.PI / 180;
+    const cosT = Math.cos(TILT), sinT = Math.sin(TILT);
+    const LX_raw = -0.5, LY_raw = -0.55, LZ_raw = 0.67;
+    const ll = Math.sqrt(LX_raw**2 + LY_raw**2 + LZ_raw**2);
+    const LX = LX_raw/ll, LY = LY_raw/ll, LZ = LZ_raw/ll;
+
+    const LAT_STEPS = 38, BASE_LON = 72, BASE_DOT = 5.5;
+
+    function render(angle) {
+      ctx.fillStyle = '#d8d8d8';
+      ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = '#000';
+
+      const dots = [];
+      for (let li = 0; li <= LAT_STEPS; li++) {
+        const lat = (li / LAT_STEPS) * Math.PI - Math.PI / 2;
+        const cosLat = Math.cos(lat), sinLat = Math.sin(lat);
+        const lonSteps = Math.max(4, Math.round(BASE_LON * Math.abs(cosLat)));
+
+        for (let lo = 0; lo < lonSteps; lo++) {
+          const lon = (lo / lonSteps) * 2 * Math.PI + angle;
+          let x = cosLat * Math.cos(lon);
+          let y = sinLat;
+          let z = cosLat * Math.sin(lon);
+
+          const xt = x * cosT - y * sinT;
+          const yt = x * sinT + y * cosT;
+          x = xt; y = yt;
+
+          if (z < 0) continue;
+          const diff = Math.max(0, x*LX + y*LY + z*LZ);
+          const bright = diff * 0.88 + 0.10;
+          const edge = Math.pow(Math.max(0, z), 0.35);
+          const dotR = BASE_DOT * edge * (0.28 + bright * 0.72);
+          if (dotR > 0.3) dots.push({ z, px: cx + x*R, py: cy - y*R, dotR });
+        }
+      }
+      dots.sort((a,b) => a.z - b.z);
+      dots.forEach(d => {
+        ctx.beginPath();
+        ctx.arc(d.px, d.py, d.dotR, 0, Math.PI*2);
+        ctx.fill();
+      });
+    }
+
+    // Render a single frame at a good angle for the static og:image
+    // (about 1/8 rotation in — shows the tilt and dot texture well)
+    render(Math.PI * 0.15);
+  </script>
+</body>
+</html>

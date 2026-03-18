@@ -8,6 +8,7 @@
   <meta name="keywords" content="defense tech, dual use, venture capital, defense startups, VC funds, Anduril, Palantir, Shield AI, defense investment, defense tech VC" />
   <meta name="author" content="Dual Use" />
   <link rel="canonical" href="https://dualuse.vc/" />
+  <link rel="icon" href="favicon.gif" type="image/gif" />
   <meta name="robots" content="index, follow" />
 
   <!-- Open Graph -->
@@ -2053,26 +2054,34 @@
             background: "#d8d8d8", color: "#000", padding: "48px 64px 44px",
           }
         },
-          React.createElement("div", { style: { maxWidth: 1400, margin: "0 auto" } },
-            React.createElement("h1", {
-              className: "du-wordmark",
-              style: {
-                fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
-                fontSize: 96, fontWeight: 900, letterSpacing: "-0.03em", lineHeight: 0.95,
-                color: "#e00000", cursor: "pointer", display: "inline-block"
-              },
-              onClick: () => setActiveTab("overview"),
-              title: "Back to overview"
-            }, "DUAL USE"),
-            React.createElement("p", {
-              style: {
-                fontSize: 22, color: "#666", marginTop: 16,
-                fontWeight: 400, letterSpacing: "0.01em",
-                fontFamily: "'IBM Plex Mono', 'Courier New', monospace",
-                fontStyle: "italic", fontWeight: 700
-              },
-              className: "du-subtitle"
-            }, "Tracking venture capital investment in defense tech")
+          React.createElement("div", { style: { maxWidth: 1400, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between" } },
+            React.createElement("div", null,
+              React.createElement("h1", {
+                className: "du-wordmark",
+                style: {
+                  fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
+                  fontSize: 96, fontWeight: 900, letterSpacing: "-0.03em", lineHeight: 0.95,
+                  color: "#e00000", cursor: "pointer", display: "inline-block"
+                },
+                onClick: () => setActiveTab("overview"),
+                title: "Back to overview"
+              }, "DUAL USE"),
+              React.createElement("p", {
+                style: {
+                  fontSize: 22, color: "#666", marginTop: 16,
+                  fontWeight: 400, letterSpacing: "0.01em",
+                  fontFamily: "'IBM Plex Mono', 'Courier New', monospace",
+                  fontStyle: "italic", fontWeight: 700
+                },
+                className: "du-subtitle"
+              }, "Tracking venture capital investment in defense tech")
+            ),
+            React.createElement("canvas", {
+              id: "du-globe",
+              width: 140, height: 140,
+              style: { display: "block", flexShrink: 0 },
+              className: "du-globe-canvas"
+            })
           )
         ),
         // Nav
@@ -2123,6 +2132,67 @@
     }
 
     ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(App));
+  </script>
+
+  <!-- Rotating halftone globe -->
+  <style>
+    @media (max-width: 768px) { .du-globe-canvas { display: none !important; } }
+  </style>
+  <script>
+    (function() {
+      const TILT = 23.5 * Math.PI / 180;
+      const cosT = Math.cos(TILT), sinT = Math.sin(TILT);
+      const ll = Math.sqrt(0.5*0.5 + 0.55*0.55 + 0.67*0.67);
+      const LX = -0.5/ll, LY = -0.55/ll, LZ = 0.67/ll;
+      const LAT = 28, BASE_LON = 54, BASE_DOT = 2.0;
+
+      function drawGlobe(canvas, angle) {
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const W = canvas.width, H = canvas.height;
+        const cx = W/2, cy = H/2, R = 60;
+        ctx.fillStyle = '#d8d8d8';
+        ctx.fillRect(0, 0, W, H);
+        ctx.fillStyle = '#000';
+
+        const dots = [];
+        for (let li = 0; li <= LAT; li++) {
+          const lat = (li/LAT)*Math.PI - Math.PI/2;
+          const cosL = Math.cos(lat), sinL = Math.sin(lat);
+          const lons = Math.max(4, Math.round(BASE_LON * Math.abs(cosL)));
+          for (let lo = 0; lo < lons; lo++) {
+            const lon = (lo/lons)*2*Math.PI + angle;
+            let x = cosL*Math.cos(lon), y = sinL, z = cosL*Math.sin(lon);
+            const xt = x*cosT - y*sinT, yt = x*sinT + y*cosT;
+            x = xt; y = yt;
+            if (z < 0) continue;
+            const diff = Math.max(0, x*LX + y*LY + z*LZ);
+            const bright = diff*0.88 + 0.10;
+            const edge = Math.pow(Math.max(0, z), 0.35);
+            const dr = BASE_DOT * edge * (0.28 + bright*0.72);
+            if (dr > 0.18) dots.push({ z, px: cx+x*R, py: cy-y*R, dr });
+          }
+        }
+        dots.sort((a,b) => a.z - b.z);
+        dots.forEach(d => {
+          ctx.beginPath();
+          ctx.arc(d.px, d.py, d.dr, 0, Math.PI*2);
+          ctx.fill();
+        });
+      }
+
+      let angle = 0;
+      function tick() {
+        const canvas = document.getElementById('du-globe');
+        drawGlobe(canvas, angle);
+        angle += 0.003;
+        requestAnimationFrame(tick);
+      }
+      // Wait for React to mount the canvas
+      const wait = setInterval(() => {
+        if (document.getElementById('du-globe')) { clearInterval(wait); tick(); }
+      }, 100);
+    })();
   </script>
 </body>
 </html>
