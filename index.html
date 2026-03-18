@@ -1,0 +1,2053 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dual Use Tracker</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@1,500&display=swap" rel="stylesheet">
+  <style>
+    @import url('https://rsms.me/inter/inter.css');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+      background: #ffffff;
+      color: #000000;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    #root { min-height: 100vh; }
+    ::selection { background: #000; color: #fff; }
+    @media (max-width: 768px) {
+      .du-header  { padding: 28px 20px 24px !important; }
+      .du-wordmark { font-size: 52px !important; }
+      .du-subtitle { font-size: 17px !important; margin-top: 10px !important; }
+      .du-nav-inner { padding: 0 4px !important; }
+      .du-tab { padding: 14px 12px !important; font-size: 9px !important; letter-spacing: 0.1em !important; }
+      .du-main { padding: 24px 16px !important; }
+      .du-footer { padding: 32px 20px !important; margin-top: 48px !important; }
+      .du-grid-cards { grid-template-columns: 1fr !important; }
+      .du-grid-2col { grid-template-columns: 1fr !important; gap: 40px !important; }
+      .du-grid-detail { grid-template-columns: 1fr !important; gap: 20px !important; }
+      .du-grid-news { grid-template-columns: 1fr !important; }
+      .du-news-label { letter-spacing: 0.1em !important; font-size: 9px !important; }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useMemo, useCallback } = React;
+
+    // ── Logo Component ──────────────────────────────────────────────────────────
+    function Logo({ domain, name, size = 28 }) {
+      const [failed, setFailed] = React.useState(false);
+      const initial = name ? name.charAt(0).toUpperCase() : "?";
+
+      if (domain && !failed) {
+        return React.createElement("img", {
+          src: "https://www.google.com/s2/favicons?domain=" + domain + "&sz=128",
+          alt: name,
+          width: size,
+          height: size,
+          onError: () => setFailed(true),
+          style: { borderRadius: 0, objectFit: "cover", flexShrink: 0, background: "#f0f0f0" }
+        });
+      }
+      return React.createElement("div", {
+        style: {
+          width: size, height: size, borderRadius: 0,
+          background: "#000", color: "#fff",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: size * 0.45, fontWeight: 700, flexShrink: 0,
+          letterSpacing: "0.02em"
+        }
+      }, initial);
+    }
+
+    // ── Data ──────────────────────────────────────────────────────────────────────
+    const VC_FUNDS = [
+      {
+        id: 1, name: "Andreessen Horowitz (a16z)", type: "Traditional VC", hq: "Menlo Park, CA",
+        aum: "$90B+", defenseThesis: "American Dynamism", domain: "a16z.com",
+        description: "Launched 'American Dynamism' practice and DC office in 2024. Raised $1.12B dedicated national-interest fund in Jan 2026 as part of $15B mega-raise.",
+        notableInvestments: ["Anduril Industries", "Hadrian", "Saronic", "Pryzm", "Forterra", "Galvanick", "SpaceX"],
+        sectors: ["Autonomous Systems", "Manufacturing", "AI/ML", "Cybersecurity", "Space"],
+        stage: "Seed \u2192 Growth"
+      },
+      {
+        id: 2, name: "Founders Fund", type: "Traditional VC", hq: "San Francisco, CA",
+        aum: "$12B+", defenseThesis: "Contrarian deep-tech bets", domain: "foundersfund.com",
+        description: "Co-founded by Peter Thiel. Led or co-led Anduril's Series F ($1.5B) and Series G ($2.5B). Early backer of Palantir and SpaceX.",
+        notableInvestments: ["Anduril Industries", "Palantir", "SpaceX", "Hadrian", "Resilience"],
+        sectors: ["Autonomous Systems", "AI/ML", "Space", "Manufacturing", "Biotech"],
+        stage: "Seed \u2192 Growth"
+      },
+      {
+        id: 3, name: "Lux Capital", type: "Traditional VC", hq: "New York, NY",
+        aum: "$5B+", defenseThesis: "Frontier science for national security", domain: "luxcapital.com",
+        description: "Closed $1.5B Fund IX in Jan 2026. Raising dedicated $200M defense fund. Seed investor in Anduril. Focus on hard science with defense applications.",
+        notableInvestments: ["Anduril Industries", "Hadrian", "Saildrone", "Epirus", "Applied Intuition"],
+        sectors: ["Autonomous Systems", "Manufacturing", "Directed Energy", "Space", "Autonomous Vehicles"],
+        stage: "Seed \u2192 Series C"
+      },
+      {
+        id: 4, name: "Trucks Venture Capital", type: "Traditional VC", hq: "San Francisco, CA",
+        aum: "$70M (Fund III)", defenseThesis: "Future of transportation \u2014 defense & commercial", domain: "trucks.vc",
+        description: "Closed $70M Fund III in Dec 2024. 109 total investments across transportation tech. Increasingly active in aerospace & defense with bets on blended-wing-body aircraft, autonomous flight, and defense autonomy.",
+        notableInvestments: ["JetZero", "Joby Aviation", "Skyryse", "Auriga Space", "Havoc"],
+        sectors: ["Aerospace", "Autonomous Systems", "Maritime", "Advanced Manufacturing"],
+        stage: "Seed \u2192 Series B"
+      },
+      {
+        id: 5, name: "General Catalyst", type: "Traditional VC", hq: "Cambridge, MA",
+        aum: "$25B+", defenseThesis: "Responsible innovation at scale", domain: "generalcatalyst.com",
+        description: "Led Helsing's $489M round in 2024 (valued at $5.4B). Expanding into European defense tech. One of the first mainstream VCs to back battlefield AI.",
+        notableInvestments: ["Helsing", "Anduril Industries", "Vannevar Labs", "Chariot Defense"],
+        sectors: ["AI/ML", "Autonomous Systems"],
+        stage: "Series A \u2192 Growth"
+      },
+      {
+        id: 5, name: "Shield Capital", type: "Defense-Focused VC", hq: "Washington, DC",
+        aum: "$500M+", defenseThesis: "Dual-use cyber and space", domain: "shieldcap.com",
+        description: "Founded by former DoD Defense Innovation Unit leader Raj Shah and Philip Bilden. Invests in dual-use defense, cybersecurity, and space companies.",
+        notableInvestments: ["Hawkeye 360", "Elroy Air", "Rebellion Defense", "GoSecure", "Authentic8"],
+        sectors: ["Cybersecurity", "Space", "AI/ML"],
+        stage: "Seed \u2192 Series B"
+      },
+      {
+        id: 6, name: "In-Q-Tel", type: "Government VC", hq: "Arlington, VA",
+        aum: "N/A (CIA-backed)", defenseThesis: "Strategic technology for national security", domain: "iqt.org",
+        description: "The CIA's venture arm. 34 investments in top 100 defense tech companies \u2014 more than any other fund. 25 unicorns and 800+ companies over 26 years.",
+        notableInvestments: ["Palantir", "Databricks", "MongoDB", "Recorded Future", "ICEYE", "Cerebras"],
+        sectors: ["AI/ML", "Cybersecurity", "Data Analytics", "Quantum Computing", "Biotech"],
+        stage: "Seed \u2192 Series B"
+      },
+      {
+        id: 7, name: "Point72 Ventures", type: "Hedge Fund VC", hq: "Stamford, CT",
+        aum: "$2B+ (VC arm)", defenseThesis: "Deterrence fund", domain: "point72.com",
+        description: "Steve Cohen's venture arm. Launched $400M dedicated 'Deterrence' defense fund in 2026. Has backed 18 defense companies since 2020 from ~900 evaluated.",
+        notableInvestments: ["Shield AI", "Vannevar Labs", "STOKE Space", "Saronic", "REGENT", "Overland AI"],
+        sectors: ["Autonomous Systems", "AI/ML", "Space", "Maritime"],
+        stage: "Seed \u2192 Series B"
+      },
+      {
+        id: 8, name: "Lightspeed Venture Partners", type: "Traditional VC", hq: "Menlo Park, CA",
+        aum: "$25B+", defenseThesis: "Software-defined defense", domain: "lsvp.com",
+        description: "Led Castelion's $100M Series A. Increasing allocation to defense tech startups with software-first approaches.",
+        notableInvestments: ["Castelion"],
+        sectors: ["Missiles & Munitions", "AI/ML"],
+        stage: "Series A \u2192 Growth"
+      },
+      {
+        id: 9, name: "Valor Equity Partners", type: "Growth Equity", hq: "Chicago, IL",
+        aum: "$4B+", defenseThesis: "Operational value creation", domain: "valorep.com",
+        description: "Led Chaos Industries' $510M round at $4.5B valuation. Known for backing operationally intensive companies like Tesla.",
+        notableInvestments: ["Chaos Industries", "SpaceX"],
+        sectors: ["Counter-Drone", "Space"],
+        stage: "Growth"
+      },
+      {
+        id: 10, name: "Sequoia Capital", type: "Traditional VC", hq: "Menlo Park, CA",
+        aum: "$85B+", defenseThesis: "Selective defense tech bets", domain: "sequoiacap.com",
+        description: "Led Nominal's $75M Series B. Increasing presence in defense tech after historically focusing on commercial software.",
+        notableInvestments: ["Nominal"],
+        sectors: ["AI/ML", "Data Analytics"],
+        stage: "Series A \u2192 Growth"
+      },
+      {
+        id: 11, name: "Accel", type: "Traditional VC", hq: "Palo Alto, CA",
+        aum: "$50B+", defenseThesis: "Enterprise software for defense", domain: "accel.com",
+        description: "Led Chaos Industries' $275M Series C in Sep 2025. Expanding from enterprise SaaS into defense applications.",
+        notableInvestments: ["Chaos Industries"],
+        sectors: ["Counter-Drone", "AI/ML"],
+        stage: "Series A \u2192 Growth"
+      },
+      {
+        id: 12, name: "RTX Ventures", type: "Corporate VC", hq: "Arlington, VA",
+        aum: "N/A", defenseThesis: "Strategic aerospace & defense innovation", domain: "rtx.com",
+        description: "Venture arm of RTX (formerly Raytheon Technologies). Evaluates 1,000 companies annually, invests in ~1%. For every $1 RTX invests, $16 comes from co-investors.",
+        notableInvestments: ["Ursa Major", "Hermeus", "EnCharge AI", "Tomorrow.io"],
+        sectors: ["Space", "Hypersonics", "AI/ML", "Advanced Manufacturing"],
+        stage: "Seed \u2192 Series B"
+      },
+      {
+        id: 13, name: "Lockheed Martin Ventures", type: "Corporate VC", hq: "Bethesda, MD",
+        aum: "$400M (evergreen)", defenseThesis: "Adjacent technology for defense integration", domain: "lockheedmartin.com",
+        description: "120+ companies invested since 2007. Provides pilot customers, engineering talent, and acquisition pathways. Invested in Mythic (Dec 2025).",
+        notableInvestments: ["Firestorm", "Terran Orbital", "Saildrone", "Mythic"],
+        sectors: ["Space", "Autonomous Systems", "Directed Energy", "Cybersecurity"],
+        stage: "Seed \u2192 Series B"
+      },
+      {
+        id: 14, name: "Boeing HorizonX / AEI HorizonX", type: "Corporate VC", hq: "Chicago, IL",
+        aum: "$250M (Fund II)", defenseThesis: "Advanced manufacturing & autonomy", domain: "boeing.com",
+        description: "Boeing's venture arm. Portfolio of 51 global investments across U.S., Europe, Asia, and Australia. Fund II targets $250M.",
+        notableInvestments: ["SparkCognition", "Near Earth Autonomy"],
+        sectors: ["Autonomous Systems", "Advanced Manufacturing", "Space", "AI/ML"],
+        stage: "Late Seed \u2192 Growth"
+      },
+      {
+        id: 15, name: "Moonshots Capital", type: "Defense-Focused VC", hq: "Austin, TX",
+        aum: "$200M+", defenseThesis: "Veteran-led bold founders", domain: "moonshotscapital.com",
+        description: "Veteran-led seed & early Series A fund. 13 unicorns and 27 total exits. Deep network in defense and national security community.",
+        notableInvestments: ["Shield AI", "Rebellion Defense"],
+        sectors: ["AI/ML", "Autonomous Systems", "Cybersecurity"],
+        stage: "Seed \u2192 Series A"
+      },
+      {
+        id: 16, name: "Decisive Point", type: "Defense-Focused VC", hq: "Washington, DC",
+        aum: "N/A", defenseThesis: "Critical technologies for defense, energy, infrastructure", domain: "decisivepoint.com",
+        description: "Focused exclusively on investing in critical technologies at the intersection of defense, energy, and infrastructure.",
+        notableInvestments: [],
+        sectors: ["Defense", "Energy", "Infrastructure"],
+        stage: "Seed \u2192 Series A"
+      },
+      {
+        id: 18, name: "Khosla Ventures", type: "Traditional VC", hq: "Menlo Park, CA",
+        aum: "$15B+", defenseThesis: "Deep tech with defense upside", domain: "khoslaventures.com",
+        description: "Includes defense explicitly within broad innovation thesis. Backed Varda Space Industries and Hermeus. Focus on transformative technology spanning energy, AI, robotics, and defense.",
+        notableInvestments: ["Varda Space Industries", "Hermeus", "Anduril Industries"],
+        sectors: ["Space", "Hypersonics", "AI/ML", "Robotics"],
+        stage: "Seed \u2192 Growth"
+      },
+      {
+        id: 19, name: "8VC", type: "Traditional VC", hq: "Austin, TX",
+        aum: "$4B+", defenseThesis: "Strategic technology for national competitiveness", domain: "8vc.com",
+        description: "Founded by Joe Lonsdale (Palantir co-founder). Active in defense tech consortium. Focus on logistics, government tech, and defense platforms.",
+        notableInvestments: ["Epirus", "Palantir"],
+        sectors: ["Directed Energy", "AI/ML", "Defense Software"],
+        stage: "Seed \u2192 Growth"
+      },
+      {
+        id: 20, name: "MilVet Angels", type: "Defense-Focused VC", hq: "Multiple (US)",
+        aum: "N/A (Syndicate)", defenseThesis: "Veteran-powered defense syndicate", domain: "milvetangels.com",
+        description: "Nonprofit defense VC syndicate with 250 members including tech founders, financiers, Intel officials, and former military/SEALs. Emerged from stealth Sep 2025. Profits donated to MVA Foundation.",
+        notableInvestments: ["Anduril Industries", "Shield AI", "Hermeus", "Ursa Major", "Aetherflux"],
+        sectors: ["Autonomous Systems", "Space", "Hypersonics", "Propulsion"],
+        stage: "Seed \u2192 Series B"
+      },
+      {
+        id: 21, name: "Insight Partners", type: "Traditional VC", hq: "New York, NY",
+        aum: "$90B+", defenseThesis: "Enterprise & cybersecurity for defense", domain: "insightpartners.com",
+        description: "800+ investments, 150+ exits, 55+ IPOs. Dedicated MD specializing in defense tech with 40+ sponsored investments. Backed SentinelOne and Recorded Future (acquired by Mastercard for $2.65B).",
+        notableInvestments: ["SentinelOne", "Recorded Future"],
+        sectors: ["Cybersecurity", "AI/ML", "Data Analytics"],
+        stage: "Series A \u2192 Growth"
+      },
+      {
+        id: 22, name: "Kleiner Perkins", type: "Traditional VC", hq: "Menlo Park, CA",
+        aum: "$10B+", defenseThesis: "Selective defense & hard tech", domain: "kleinerperkins.com",
+        description: "Agreed to lead Saronic's funding round. Historically focused on consumer/enterprise tech, increasingly making defense-adjacent bets.",
+        notableInvestments: ["Saronic"],
+        sectors: ["Maritime", "Autonomous Systems"],
+        stage: "Series A \u2192 Growth"
+      },
+      {
+        id: 23, name: "Stratos Ventures", type: "Defense-Focused VC", hq: "Tel Aviv / DC",
+        aum: "N/A", defenseThesis: "Core defense systems & sovereign manufacturing", domain: "stratos.vc",
+        description: "Partnerships with Israeli MOD, U.S. DoD, and NATO DIANA. Focus on democratic reinforcement through defense, education, health, and infrastructure.",
+        notableInvestments: [],
+        sectors: ["Defense", "Manufacturing", "Infrastructure"],
+        stage: "Seed \u2192 Series A"
+      },
+      {
+        id: 24, name: "Bedrock Capital", type: "Traditional VC", hq: "San Francisco, CA",
+        aum: "$1B+", defenseThesis: "Narrative-breaking companies", domain: "bedrockcap.com",
+        description: "Founded by Peter Thiel associates. Backs companies challenging incumbents in large markets. Defense tech exposure through dual-use portfolio companies.",
+        notableInvestments: [],
+        sectors: ["AI/ML", "Defense Software"],
+        stage: "Seed \u2192 Series B"
+      },
+      {
+        id: 25, name: "Sands Capital", type: "Growth Equity", hq: "Arlington, VA",
+        aum: "$50B+", defenseThesis: "Growth-stage defense tech", domain: "sandscapital.com",
+        description: "Co-led Anduril's $1.5B Series F alongside Founders Fund. Growing allocation to defense technology at growth stage.",
+        notableInvestments: ["Anduril Industries"],
+        sectors: ["Autonomous Systems", "AI/ML"],
+        stage: "Growth"
+      },
+    ];
+
+    const STARTUPS = [
+      {
+        id: 1, name: "Anduril Industries", founded: 2017, hq: "Costa Mesa, CA",
+        valuation: "$30.5B", totalRaised: "$4.7B+", ceo: "Brian Schimpf", domain: "anduril.com",
+        description: "Builds autonomous defense systems including counter-drone towers, autonomous submarines, and AI-powered command systems. Lattice OS is their core software platform.",
+        sectors: ["Autonomous Systems", "AI/ML", "Counter-Drone", "Maritime"],
+        investors: ["Founders Fund", "Andreessen Horowitz (a16z)", "Lux Capital", "General Catalyst", "Sands Capital"],
+        primePartners: ["Boeing"],
+        dualUse: "Border surveillance (DHS), counter-drone (DoD), autonomous undersea vehicles",
+        commercialUse: "Border security, infrastructure protection, maritime domain awareness"
+      },
+      {
+        id: 2, name: "Palantir Technologies", founded: 2003, hq: "Denver, CO",
+        valuation: "~$250B (public)", totalRaised: "$3B+ (pre-IPO)", ceo: "Alex Karp", domain: "palantir.com",
+        description: "Data analytics platform serving government and commercial clients. Gotham for defense/IC, Foundry for commercial. AIP for AI applications. Public since 2020.",
+        sectors: ["AI/ML", "Data Analytics", "Cybersecurity"],
+        investors: ["Founders Fund", "In-Q-Tel", "CIA"],
+        primePartners: ["All major primes"],
+        dualUse: "Military intelligence analysis, battlefield planning, logistics optimization",
+        commercialUse: "Healthcare analytics, financial services, supply chain optimization, energy"
+      },
+      {
+        id: 3, name: "Shield AI", founded: 2015, hq: "San Diego, CA",
+        valuation: "$5.6B", totalRaised: "$1.6B", ceo: "Ryan Tseng", domain: "shield.ai",
+        description: "Builds Hivemind AI pilot for autonomous military aircraft. V-BAT drone holds $198M Coast Guard contract. Combat-validated in Ukraine's EW environment. Expanding across allied air forces.",
+        sectors: ["Autonomous Systems", "AI/ML", "Drones"],
+        investors: ["Andreessen Horowitz", "L3Harris (strategic)", "Hanwha Asset Management", "U.S. Innovative Technology Fund"],
+        primePartners: ["L3Harris", "Lockheed Martin"],
+        dualUse: "AI autonomous combat aircraft in GPS/EW-denied environments, V-BAT maritime patrol, allied air force autonomy",
+        commercialUse: "Autonomous aviation technology, logistics drones, infrastructure inspection"
+      },
+      {
+        id: 4, name: "Helsing", founded: 2021, hq: "Munich, Germany",
+        valuation: "$12B+", totalRaised: "$1.5B+", ceo: "Gundbert Scherf", domain: "helsing.ai",
+        description: "European AI defense company. Largest European defense tech unicorn. Building own hardware including radar solutions for Eurofighter. Raised \u20ac600M in Jun 2025.",
+        sectors: ["AI/ML", "Autonomous Systems"],
+        investors: ["General Catalyst", "Saab", "Prima Materia", "Daniel Ek"],
+        primePartners: ["Saab", "European defense agencies"],
+        dualUse: "Battlefield AI, sensor fusion, autonomous target recognition",
+        commercialUse: "Industrial AI applications, predictive maintenance"
+      },
+      {
+        id: 5, name: "Saronic", founded: 2022, hq: "Austin, TX",
+        valuation: "$4B+", totalRaised: "$900M+", ceo: "Dino Mavrookas", domain: "saronic.com",
+        description: "Builds autonomous surface vessels from 6 to 150 feet including Marauder MUSV, Spyglass, Cutlass, Corsair, Mirage, and Cipher platforms. U.S. Navy $392M+ OTA contract.",
+        sectors: ["Autonomous Systems", "Maritime", "Robotics"],
+        investors: ["Andreessen Horowitz (a16z)", "Point72 Ventures", "Kleiner Perkins"],
+        primePartners: [],
+        dualUse: "Autonomous naval patrol, mine countermeasures, anti-submarine warfare",
+        commercialUse: "Maritime logistics, port security, oceanographic research"
+      },
+      {
+        id: 6, name: "Chaos Industries", founded: 2022, hq: "New York, NY",
+        valuation: "$4.5B", totalRaised: "$800M+", ceo: "N/A", domain: "chaosindustries.com",
+        description: "Counter-drone radar and communications systems. $510M round led by Valor Equity Partners, followed by $275M Series C led by Accel.",
+        sectors: ["Counter-Drone", "Radar", "Communications"],
+        investors: ["Valor Equity Partners", "Accel"],
+        primePartners: [],
+        dualUse: "Counter-drone defense, radar systems, electronic warfare",
+        commercialUse: "Airport security, critical infrastructure protection, event security"
+      },
+      {
+        id: 7, name: "Hadrian", founded: 2020, hq: "Torrance, CA",
+        valuation: "$2B+", totalRaised: "$400M+", ceo: "Chris Power", domain: "hadrian.co",
+        description: "Automated precision manufacturing for aerospace and defense. Building 'factories of the future' using software-driven CNC machining. $260M Series C in Jul 2025.",
+        sectors: ["Advanced Manufacturing", "Robotics"],
+        investors: ["Founders Fund", "Lux Capital", "Andreessen Horowitz (a16z)", "Altimeter Capital"],
+        primePartners: ["Lockheed Martin", "Northrop Grumman", "RTX"],
+        dualUse: "Precision parts for missiles, satellites, aircraft",
+        commercialUse: "Commercial aerospace parts, semiconductor equipment"
+      },
+      {
+        id: 8, name: "Skydio", founded: 2014, hq: "San Mateo, CA",
+        valuation: "$2.2B", totalRaised: "$700M+", ceo: "Adam Bry", domain: "skydio.com",
+        description: "AI-powered autonomous drones. Exited consumer market in 2023 to focus on enterprise and defense. $100M Army SRR contract in 2022. X10 is flagship defense drone.",
+        sectors: ["Drones", "AI/ML", "Autonomous Systems"],
+        investors: ["Andreessen Horowitz (a16z)", "IVP", "Next47"],
+        primePartners: [],
+        dualUse: "Short-range reconnaissance, ISR, mapping",
+        commercialUse: "Infrastructure inspection, public safety, surveying"
+      },
+      {
+        id: 9, name: "Castelion", founded: 2022, hq: "El Segundo, CA",
+        valuation: "$1B+", totalRaised: "$450M+", ceo: "Bryon Hargis", domain: "castelion.com",
+        description: "Developing next-gen missiles and munitions. $100M Series A led by Lightspeed, then $350M Series B in 2025. One of the 2025 defense unicorns.",
+        sectors: ["Missiles & Munitions", "Hypersonics"],
+        investors: ["Lightspeed Venture Partners"],
+        primePartners: [],
+        dualUse: "Hypersonic missiles, precision-guided munitions, rapid manufacturing",
+        commercialUse: "Limited \u2014 primarily defense-focused"
+      },
+      {
+        id: 10, name: "SpaceX", founded: 2002, hq: "Hawthorne, CA",
+        valuation: "$350B+", totalRaised: "$10B+", ceo: "Elon Musk", domain: "spacex.com",
+        description: "Dominant launch provider and Starlink satellite constellation operator. Defense contracts include missile tracking, Starshield, and launch services.",
+        sectors: ["Space", "Satellites", "Communications"],
+        investors: ["Founders Fund", "Andreessen Horowitz (a16z)", "Valor Equity Partners"],
+        primePartners: ["Northrop Grumman", "L3Harris"],
+        dualUse: "Military satellite comms (Starshield), missile tracking, launch services",
+        commercialUse: "Starlink internet, commercial launch, space tourism"
+      },
+      {
+        id: 11, name: "Epirus", founded: 2018, hq: "Torrance, CA",
+        valuation: "$1.5B", totalRaised: "$350M+", ceo: "Andy Lowery", domain: "epirusinc.com",
+        description: "Directed energy and power management systems. Leonidas is their counter-drone directed energy weapon. Purchased by U.S. Marines. $100M+ in DoD contracts.",
+        sectors: ["Directed Energy", "Counter-Drone", "Power Systems"],
+        investors: ["Lux Capital", "8VC"],
+        primePartners: ["L3Harris"],
+        dualUse: "Counter-drone directed energy, base defense, power management",
+        commercialUse: "Wireless power, EV charging, grid management"
+      },
+      {
+        id: 12, name: "Hermeus", founded: 2018, hq: "Atlanta, GA",
+        valuation: "$1B+", totalRaised: "$300M+", ceo: "AJ Piplica", domain: "hermeus.com",
+        description: "Developing hypersonic aircraft. Flew first supersonic-capable Quarterhorse Mk 2.1 in March 2026. Working toward Mach 5. Building Darkhorse for the Air Force.",
+        sectors: ["Hypersonics", "Aerospace"],
+        investors: ["RTX Ventures", "Khosla Ventures", "Sam Altman", "MilVet Angels"],
+        primePartners: ["RTX"],
+        dualUse: "Hypersonic ISR, rapid global strike, point-to-point transport",
+        commercialUse: "Hypersonic passenger travel (future), rapid cargo delivery"
+      },
+      {
+        id: 13, name: "Ursa Major", founded: 2015, hq: "Berthoud, CO",
+        valuation: "$1B+", totalRaised: "$300M+", ceo: "Joe Laurienti", domain: "ursamajor.com",
+        description: "Rocket propulsion manufacturer. Domestically-sourced engines. Hadley engine powers Stratolaunch's Talon-A. Developed HAVOC hypersonic missile system. $100M Series E Nov 2025.",
+        sectors: ["Space", "Manufacturing", "Propulsion"],
+        investors: ["RTX Ventures", "Breakthrough Energy Ventures", "MilVet Angels"],
+        primePartners: ["RTX", "Northrop Grumman", "BAE Systems"],
+        dualUse: "Missile and rocket propulsion, hypersonic vehicle engines",
+        commercialUse: "Commercial launch vehicles, space access"
+      },
+      {
+        id: 14, name: "Saildrone", founded: 2012, hq: "Alameda, CA",
+        valuation: "$500M+", totalRaised: "$200M+", ceo: "Richard Jenkins", domain: "saildrone.com",
+        description: "Autonomous surface vehicles for ocean data collection. Wind and solar powered. 20 Voyager USVs deployed for Navy 4th Fleet counter-narcotics. $50M Lockheed Martin investment.",
+        sectors: ["Autonomous Systems", "Maritime", "Sensors"],
+        investors: ["Lux Capital", "Lockheed Martin Ventures", "Social Capital"],
+        primePartners: ["Lockheed Martin"],
+        dualUse: "Maritime ISR, anti-submarine warfare, border patrol",
+        commercialUse: "Ocean research, weather forecasting, fisheries management, climate monitoring"
+      },
+      {
+        id: 15, name: "Vannevar Labs", founded: 2019, hq: "San Francisco, CA",
+        valuation: "$500M+", totalRaised: "$150M+", ceo: "Brett Granberg", domain: "vannevarlabs.com",
+        description: "AI-powered intelligence analysis platform. Serves intelligence community and DoD. Named after WWII science advisor Vannevar Bush.",
+        sectors: ["AI/ML", "Data Analytics", "Intelligence"],
+        investors: ["Point72 Ventures", "DFJ Growth", "General Catalyst"],
+        primePartners: [],
+        dualUse: "Intelligence analysis, threat detection, OSINT",
+        commercialUse: "Due diligence, risk analysis, corporate intelligence"
+      },
+      {
+        id: 16, name: "Nominal", founded: 2021, hq: "Austin, TX",
+        valuation: "$500M+", totalRaised: "$100M+", ceo: "N/A", domain: "nominal.io",
+        description: "Mission operations and test data platform. $75M Series B led by Sequoia Capital. Used by NASA, SpaceX, and defense programs.",
+        sectors: ["Space", "Data Analytics", "Testing"],
+        investors: ["Sequoia Capital"],
+        primePartners: ["SpaceX", "NASA"],
+        dualUse: "Satellite operations, missile test analysis, launch operations",
+        commercialUse: "Commercial space operations, vehicle testing, industrial IoT"
+      },
+      {
+        id: 17, name: "Firestorm", founded: 2022, hq: "San Francisco, CA",
+        valuation: "$200M+", totalRaised: "$35M+", ceo: "N/A", domain: "firestorm.ai",
+        description: "Defense AI company. $12.5M round led by Lockheed Martin Ventures in Mar 2024, followed by $20M Series A in Oct 2024.",
+        sectors: ["AI/ML", "Defense Software"],
+        investors: ["Lockheed Martin Ventures"],
+        primePartners: ["Lockheed Martin"],
+        dualUse: "AI-powered defense decision support, mission planning",
+        commercialUse: "Enterprise AI applications"
+      },
+      {
+        id: 18, name: "Forterra", founded: 2022, hq: "Clarksburg, MD",
+        valuation: "$500M+", totalRaised: "$150M+", ceo: "N/A", domain: "forterra.com",
+        description: "Autonomous ground vehicle systems. Builds autonomous missile launchers and logistics vehicles for the military.",
+        sectors: ["Autonomous Systems", "Ground Vehicles", "Robotics"],
+        investors: ["Andreessen Horowitz (a16z)"],
+        primePartners: [],
+        dualUse: "Autonomous convoy operations, missile launchers, logistics",
+        commercialUse: "Mining, agriculture, warehouse logistics"
+      },
+      {
+        id: 19, name: "Applied Intuition", founded: 2017, hq: "Sunnyvale, CA",
+        valuation: "$15B", totalRaised: "$1.1B+", ceo: "Qasar Younis", domain: "appliedintuition.com",
+        description: "Autonomous vehicle simulation and infrastructure software. Raised $600M in Jun 2025 pushing further into defense. DIU contract for Army Robotic Combat Vehicle program.",
+        sectors: ["Autonomous Vehicles", "AI/ML", "Simulation"],
+        investors: ["Lux Capital", "Andreessen Horowitz (a16z)"],
+        primePartners: [],
+        dualUse: "Autonomous vehicle simulation for military, defense program testing",
+        commercialUse: "Commercial self-driving car development, ADAS testing"
+      },
+      {
+        id: 20, name: "Pryzm", founded: 2023, hq: "Washington, DC",
+        valuation: "N/A (Seed)", totalRaised: "$12.2M", ceo: "N/A", domain: "pryzm.com",
+        description: "AI-powered defense procurement intelligence. $12.2M seed led by a16z American Dynamism. Helps firms anticipate federal tech opportunities.",
+        sectors: ["AI/ML", "Defense Software", "Procurement"],
+        investors: ["Andreessen Horowitz (a16z)"],
+        primePartners: [],
+        dualUse: "Federal procurement intelligence, contracting optimization",
+        commercialUse: "Government contracting business development"
+      },
+      {
+        id: 21, name: "Varda Space Industries", founded: 2020, hq: "El Segundo, CA",
+        valuation: "$500M+", totalRaised: "$200M+", ceo: "Will Bruey", domain: "varda.com",
+        description: "In-space manufacturing for pharmaceuticals and hypersonic materials. Building re-entry capsules that double as hypersonic test vehicles for DoD flight systems.",
+        sectors: ["Space", "Manufacturing", "Hypersonics"],
+        investors: ["Founders Fund", "Lux Capital", "Khosla Ventures", "General Catalyst"],
+        primePartners: [],
+        dualUse: "Hypersonic materials, in-space manufacturing for DoD applications",
+        commercialUse: "Pharmaceutical manufacturing in microgravity"
+      },
+      {
+        id: 22, name: "Commonwealth Fusion Systems", founded: 2018, hq: "Devens, MA",
+        valuation: "$5B+", totalRaised: "$3B+", ceo: "Bob Mumgaard", domain: "cfs.energy",
+        description: "Commercial nuclear fusion power. Raised $863M Series B2 in 2025. MIT spinoff. Fusion reactors can simulate nuclear conditions \u2014 major national security interest.",
+        sectors: ["Energy", "Advanced Manufacturing"],
+        investors: ["Google", "Microsoft", "Nvidia", "Breakthrough Energy Ventures"],
+        primePartners: [],
+        dualUse: "National security energy independence, nuclear simulation",
+        commercialUse: "Clean energy generation, grid-scale power"
+      },
+      {
+        id: 23, name: "JetZero", founded: 2020, hq: "Long Beach, CA",
+        valuation: "$1B+", totalRaised: "$250M+", ceo: "Tom O'Leary", domain: "jetzero.aero",
+        description: "Developing blended-wing-body aircraft for commercial and defense applications. $175M Series B in Jan 2026. Pathfinder demonstrator aircraft in flight testing. USAF contract for BWB tanker concept.",
+        sectors: ["Aerospace", "Advanced Manufacturing"],
+        investors: ["Trucks Venture Capital", "B Capital", "DiamondStream"],
+        primePartners: ["Northrop Grumman"],
+        dualUse: "Blended-wing-body tanker/transport for USAF, long-range ISR platform",
+        commercialUse: "Fuel-efficient commercial aircraft, 50% less fuel burn than conventional jets"
+      },
+      // ── Trucks VC Portfolio ──
+      {
+        id: 24, name: "Joby Aviation", founded: 2009, hq: "Santa Cruz, CA",
+        valuation: "$7.5B+", totalRaised: "$2.5B+", ceo: "JoeBen Bevirt", domain: "jobyaviation.com",
+        description: "eVTOL aircraft developer and USAF Agility Prime partner. Over 1,000 test flights. Delta Air Lines and Toyota strategic partners. FAA certification underway.",
+        sectors: ["Aerospace", "Autonomous Systems"],
+        investors: ["Trucks Venture Capital", "Toyota", "Delta Air Lines", "SoftBank", "Intel Capital"],
+        primePartners: [],
+        dualUse: "Military medevac, personnel transport, ISR missions from austere locations",
+        commercialUse: "Urban air taxi service, on-demand passenger transport"
+      },
+      {
+        id: 25, name: "Skyryse", founded: 2016, hq: "El Segundo, CA",
+        valuation: "$1.15B", totalRaised: "$605M+", ceo: "Mark Groden", domain: "skyryse.com",
+        description: "Fly-by-wire flight automation platform for helicopters. SkyOS software simplifies aircraft controls. $300M Series C in Feb 2026. Robinson Helicopter partnership. US Army engagement.",
+        sectors: ["Aerospace", "Autonomous Systems", "AI/ML"],
+        investors: ["Trucks Venture Capital", "Autopilot Ventures", "Fidelity", "Qatar Investment Authority"],
+        primePartners: [],
+        dualUse: "Military rotary-wing autonomy, crew reduction, safer combat medevac",
+        commercialUse: "Commercial helicopter safety, EMS, reduced pilot training burden"
+      },
+      {
+        id: 26, name: "Auriga Space", founded: 2022, hq: "Los Angeles, CA",
+        valuation: "N/A (Early Stage)", totalRaised: "$11M", ceo: "N/A", domain: "aurigaspace.com",
+        description: "Electromagnetic ground-based launch system for space access. Accelerates payloads via magnetic fields for low-cost, rapid satellite deployment. Trucks VC-backed stealth launch startup.",
+        sectors: ["Space", "Advanced Manufacturing"],
+        investors: ["Trucks Venture Capital", "Seraphim Space", "Possible Ventures", "DNX Ventures"],
+        primePartners: [],
+        dualUse: "Responsive DoD space access, rapid payload launch for national security missions",
+        commercialUse: "Low-cost commercial satellite launch, rapid payload deployment"
+      },
+      // ── eVTOL / Advanced Air Mobility ──
+      {
+        id: 27, name: "Archer Aviation", founded: 2020, hq: "San Jose, CA",
+        valuation: "$4.7B (NYSE: ACHR)", totalRaised: "$3.4B+", ceo: "Adam Goldstein", domain: "archer.com",
+        description: "Midnight eVTOL aircraft for urban air mobility. Public company (NYSE: ACHR). $142M AFWERX Agility Prime contract. Exclusive Anduril partnership for hybrid military VTOL. UAE launch market.",
+        sectors: ["Aerospace", "Autonomous Systems"],
+        investors: ["Stellantis", "United Airlines", "Wellington Management", "BlackRock"],
+        primePartners: ["Anduril Industries"],
+        dualUse: "Hybrid gas-electric military VTOL for logistics, ISR, and special operations via Anduril partnership",
+        commercialUse: "Electric air taxi service for urban passengers, starting in UAE and U.S."
+      },
+      {
+        id: 28, name: "Beta Technologies", founded: 2017, hq: "South Burlington, VT",
+        valuation: "$7.4B (NYSE: BETA)", totalRaised: "$1.8B+", ceo: "Kyle Clark", domain: "beta.team",
+        description: "Electric VTOL and conventional aircraft (ALIA) with proprietary ACES charging network. IPO November 2025. GE Aerospace cornerstone investor. USAF Agility Prime Phase III. Military test pilots have flown ALIA.",
+        sectors: ["Aerospace", "Autonomous Systems", "Energy"],
+        investors: ["GE Aerospace", "Amazon Climate Pledge Fund", "TPG Rise Climate", "Fidelity"],
+        primePartners: [],
+        dualUse: "Electric aircraft for military base logistics, medical evacuation, optionally piloted ISR",
+        commercialUse: "Electric cargo and passenger aircraft for regional air mobility, organ/medical logistics"
+      },
+      {
+        id: 29, name: "Wisk Aero", founded: 2019, hq: "Mountain View, CA",
+        valuation: "N/A (Boeing JV)", totalRaised: "$450M+", ceo: "Brian Yutko", domain: "wisk.aero",
+        description: "Autonomous (pilotless) eVTOL developer and Boeing joint venture. Gen 6 aircraft in development. FAA certification path underway. Most mature autonomous air taxi program globally.",
+        sectors: ["Aerospace", "Autonomous Systems"],
+        investors: ["Boeing"],
+        primePartners: ["Boeing"],
+        dualUse: "Autonomous unpiloted military transport, autonomous cargo/personnel ops",
+        commercialUse: "Pilotless urban air taxi, autonomous passenger transport"
+      },
+      {
+        id: 30, name: "Supernal", founded: 2021, hq: "Irvine, CA",
+        valuation: "N/A (Hyundai subsidiary)", totalRaised: "$1B+", ceo: "Jaiwon Shin", domain: "supernal.aero",
+        description: "Hyundai Motor Group's Advanced Air Mobility subsidiary developing S-A2 eVTOL. USAF Agility Prime participant. United Airlines partnership. FAA G-1 certification issue paper received.",
+        sectors: ["Aerospace", "Autonomous Systems"],
+        investors: ["Hyundai Motor Group"],
+        primePartners: [],
+        dualUse: "Military personnel transport, medevac, USAF Agility Prime",
+        commercialUse: "Urban air taxi, intra-city mobility"
+      },
+      {
+        id: 31, name: "Electra.aero", founded: 2020, hq: "Manassas, VA",
+        valuation: "$500M+", totalRaised: "$85M+", ceo: "John Langford", domain: "electra.aero",
+        description: "Hybrid-electric ultra-short takeoff and landing (eSTOL) aircraft requiring only 150m runway. USAF Agility Prime partner. Suitable for austere forward operating environments.",
+        sectors: ["Aerospace", "Autonomous Systems"],
+        investors: ["Global Founders Capital", "DCVC", "JetBlue Ventures"],
+        primePartners: [],
+        dualUse: "Forward operating base logistics, medevac from austere locations, STOL military ops",
+        commercialUse: "Regional air travel, short-field airport access, cargo"
+      },
+      {
+        id: 32, name: "Eve Air Mobility", founded: 2020, hq: "Melbourne, FL",
+        valuation: "$1.5B+", totalRaised: "$400M+", ceo: "Jerome Badini", domain: "eveairmobility.com",
+        description: "Embraer spinoff developing eVTOL and Urban Air Traffic Management (UATM) software. Public company (EVEX). Army Futures Command relationship. 2,900 aircraft pre-orders.",
+        sectors: ["Aerospace", "Autonomous Systems", "AI/ML"],
+        investors: ["Embraer", "United Airlines", "Republic Airways"],
+        primePartners: [],
+        dualUse: "Military urban transport, UATM software for complex airspace management",
+        commercialUse: "Urban air taxi, air traffic management software for UAM operators"
+      },
+      // ── Space ──
+      {
+        id: 33, name: "Rocket Lab", founded: 2006, hq: "Long Beach, CA",
+        valuation: "$40.5B (NASDAQ: RKLB)", totalRaised: "$288M pre-IPO", ceo: "Peter Beck", domain: "rocketlabusa.com",
+        description: "Electron small launch and Neutron medium-lift development. Won $805M+ SDA contract to build 18 missile warning satellites. Spacecraft manufacturer for NRO and Space Force. HASTE hypersonic testbed.",
+        sectors: ["Space", "Advanced Manufacturing"],
+        investors: ["Khosla Ventures", "DCVC", "public (NASDAQ: RKLB)"],
+        primePartners: ["Northrop Grumman", "Space Development Agency"],
+        dualUse: "SDA missile warning constellation, NRO satellite manufacturing, Space Force responsive launch, HASTE hypersonic testbed",
+        commercialUse: "Dedicated small satellite launch, commercial spacecraft manufacturing"
+      },
+      {
+        id: 34, name: "Planet Labs", founded: 2010, hq: "San Francisco, CA",
+        valuation: "$2B+", totalRaised: "$800M+", ceo: "Will Marshall", domain: "planet.com",
+        description: "Operates world's largest Earth observation constellation (200+ satellites). Provides daily global imagery to NGA and DoD. SkySat provides 50cm imagery. Public company (PL).",
+        sectors: ["Space", "Sensors/ISR", "AI/ML"],
+        investors: ["Google", "Founders Fund", "Felicis Ventures"],
+        primePartners: [],
+        dualUse: "NGA/DoD imagery intelligence, battlefield change detection, military monitoring",
+        commercialUse: "Agriculture, forestry, disaster response, infrastructure monitoring"
+      },
+      {
+        id: 35, name: "Capella Space", founded: 2016, hq: "San Francisco, CA",
+        valuation: "Acquired by IonQ (May 2025)", totalRaised: "$250M+", ceo: "Payam Banazadeh", domain: "capellaspace.com",
+        description: "SAR satellite imaging constellation for all-weather day/night Earth observation. Acquired by quantum computing firm IonQ in May 2025. USAF AFWERX, Space Force SSC PLEO, and SDA HALO contracts.",
+        sectors: ["Space", "Sensors/ISR"],
+        investors: ["Spark Capital", "DCVC", "Canaan Partners", "In-Q-Tel", "U.S. Innovative Technology Fund"],
+        primePartners: ["IonQ (parent)"],
+        dualUse: "All-weather persistent surveillance, military/IC change detection, Space Force PLEO imaging",
+        commercialUse: "Commercial SAR imagery for maritime monitoring, disaster response, infrastructure assessment"
+      },
+      {
+        id: 36, name: "Spire Global", founded: 2012, hq: "Vienna, VA",
+        valuation: "$500M+", totalRaised: "$300M+", ceo: "Peter Platzer", domain: "spire.com",
+        description: "100+ LEO satellite constellation for weather, maritime AIS, and aviation tracking data. DoD, NOAA, and NRO customer. Public company (SPIR).",
+        sectors: ["Space", "Data Analytics", "Sensors/ISR"],
+        investors: ["RRE Ventures", "Bessemer Venture Partners"],
+        primePartners: [],
+        dualUse: "Maritime domain awareness, weather forecasting for DoD operations, RF monitoring",
+        commercialUse: "Weather analytics, commodity trading intelligence, ship tracking"
+      },
+      {
+        id: 37, name: "BlackSky Technology", founded: 2016, hq: "Herndon, VA",
+        valuation: "$500M+", totalRaised: "$400M+", ceo: "Brian O'Toole", domain: "blacksky.com",
+        description: "Agile space intelligence platform combining satellite imagery with AI analysis. DoD and IC prime contractor. Real-time monitoring with revisit rates up to 15x/day. Public company (BKSY).",
+        sectors: ["Space", "AI/ML", "Sensors/ISR"],
+        investors: ["Intelsat", "Mithril Capital"],
+        primePartners: [],
+        dualUse: "DoD/IC real-time imagery, battlefield intelligence, rapid change detection",
+        commercialUse: "Infrastructure monitoring, supply chain visibility, crisis response"
+      },
+      {
+        id: 38, name: "Slingshot Aerospace", founded: 2017, hq: "El Segundo, CA",
+        valuation: "$500M+", totalRaised: "$80M+", ceo: "Melanie Stricklan", domain: "slingshotaerospace.com",
+        description: "Space domain awareness software platform. US Space Force contracts for tracking satellites and debris. Orbital Intelligence product for commercial operators.",
+        sectors: ["Space", "AI/ML", "Data Analytics"],
+        investors: ["Draper Associates", "Valor Equity Partners", "Lux Capital"],
+        primePartners: [],
+        dualUse: "Space Force SDA, satellite tracking, orbital deconfliction for military assets",
+        commercialUse: "Satellite operator collision avoidance, LEO traffic management"
+      },
+      {
+        id: 39, name: "True Anomaly", founded: 2022, hq: "Denver, CO",
+        valuation: "$500M+", totalRaised: "$100M+", ceo: "Even Rogers", domain: "trueanomaly.space",
+        description: "Spacecraft autonomy and defense applications. Building Jackrabbit autonomous inspection vehicle. DoD-funded. DARPA and NRO engagements for space domain awareness.",
+        sectors: ["Space", "Autonomous Systems"],
+        investors: ["Riot Ventures", "Founders Fund", "Narya Capital"],
+        primePartners: [],
+        dualUse: "Space domain awareness, satellite inspection, orbital security for DoD",
+        commercialUse: "Commercial satellite servicing, proximity operations, orbital logistics"
+      },
+      {
+        id: 40, name: "Starfish Space", founded: 2020, hq: "Kent, WA",
+        valuation: "$200M+", totalRaised: "$35M+", ceo: "Austin Link", domain: "starfishspace.com",
+        description: "Orbital services company developing Otter spacecraft for satellite servicing and debris removal. DARPA and NASA funded. Won DARPA RSGS orbital services contract.",
+        sectors: ["Space", "Robotics"],
+        investors: ["Type One Ventures", "Space Capital"],
+        primePartners: [],
+        dualUse: "DoD satellite servicing, orbital asset protection, in-space logistics for Space Force",
+        commercialUse: "Commercial satellite life extension, debris removal services"
+      },
+      {
+        id: 41, name: "Turion Space", founded: 2020, hq: "Irvine, CA",
+        valuation: "$100M+", totalRaised: "$15M+", ceo: "Ryan Westerdahl", domain: "turion.space",
+        description: "Space debris removal and rendezvous/proximity operations (RPO). Building Droid spacecraft. DARPA program participant for orbital rendezvous technology.",
+        sectors: ["Space", "Autonomous Systems"],
+        investors: ["Space Capital", "Airbus Ventures"],
+        primePartners: [],
+        dualUse: "Orbital rendezvous for DoD, satellite inspection, ASAT-adjacent capabilities",
+        commercialUse: "Commercial debris removal, satellite refueling, orbital servicing"
+      },
+      {
+        id: 42, name: "Umbra", founded: 2015, hq: "Santa Barbara, CA",
+        valuation: "$500M+", totalRaised: "$115M+", ceo: "David Langan", domain: "umbra.space",
+        description: "Commercial SAR satellite imaging company providing sub-25cm resolution imagery. NRO Strategic Alliance Consortium member. All-weather, day/night capability.",
+        sectors: ["Space", "Sensors/ISR"],
+        investors: ["In-Q-Tel", "Canaan Partners", "SoftBank Vision Fund 2"],
+        primePartners: [],
+        dualUse: "NRO/DoD SAR imagery intelligence, maritime surveillance, target monitoring",
+        commercialUse: "Infrastructure monitoring, oil/gas, agriculture, disaster response"
+      },
+      {
+        id: 43, name: "ICEYE", founded: 2014, hq: "Espoo, Finland / San Jose, CA",
+        valuation: "$1B+", totalRaised: "$300M+", ceo: "Rafal Modrzewski", domain: "iceye.com",
+        description: "World's largest commercial SAR satellite constellation with 35+ satellites. Provides all-weather, day/night imagery. Ukrainian military, NRO, and NATO customers.",
+        sectors: ["Space", "Sensors/ISR"],
+        investors: ["True Ventures", "Draper Associates", "In-Q-Tel"],
+        primePartners: [],
+        dualUse: "NRO imagery, battlefield change detection, maritime surveillance for NATO",
+        commercialUse: "Insurance, disaster response, infrastructure, agriculture monitoring"
+      },
+      {
+        id: 44, name: "Pixxel", founded: 2019, hq: "Los Angeles, CA",
+        valuation: "$400M+", totalRaised: "$95M+", ceo: "Awais Ahmed", domain: "pixxel.space",
+        description: "Hyperspectral satellite imaging startup collecting data across 150+ spectral bands. Detects chemical signatures, camouflaged assets, and subsurface features. DoD and agricultural customers.",
+        sectors: ["Space", "Sensors/ISR"],
+        investors: ["Google", "Lightspeed India", "Radical Ventures"],
+        primePartners: [],
+        dualUse: "Chemical detection, camouflage penetration, WMD site monitoring, defense ISR",
+        commercialUse: "Precision agriculture, environmental monitoring, mining exploration"
+      },
+      {
+        id: 45, name: "Muon Space", founded: 2021, hq: "Mountain View, CA",
+        valuation: "$200M+", totalRaised: "$100M+", ceo: "Jules McNeff", domain: "muonspace.com",
+        description: "Environmental sensing satellite constellation for wildfire detection and climate monitoring. NOAA, DoD, and NASA customer. Raised $56M Series B. Provides real-time fire intelligence.",
+        sectors: ["Space", "Sensors/ISR", "Data Analytics"],
+        investors: ["Eclipse Ventures", "Aligned Climate Capital"],
+        primePartners: [],
+        dualUse: "DoD environmental sensing, nuclear monitoring, wildfire intelligence for military installations",
+        commercialUse: "Wildfire detection, weather forecasting, climate monitoring"
+      },
+      {
+        id: 46, name: "Apex Space", founded: 2021, hq: "Los Angeles, CA",
+        valuation: "$200M+", totalRaised: "$60M+", ceo: "Ian Cinnamon", domain: "apexspace.com",
+        description: "Satellite bus manufacturer building Aries and Nova standard platforms. Space Force STRATFI award recipient. Delivers rapid satellite development for DoD and commercial customers.",
+        sectors: ["Space", "Advanced Manufacturing"],
+        investors: ["Future Ventures", "Costanoa Ventures"],
+        primePartners: [],
+        dualUse: "Space Force satellite bus platform, responsive space, classified DoD payloads",
+        commercialUse: "Commercial satellite bus manufacturing, rapid mission deployment"
+      },
+      {
+        id: 47, name: "Astranis", founded: 2016, hq: "San Francisco, CA",
+        valuation: "$1B+", totalRaised: "$200M+", ceo: "John Gedmark", domain: "astranis.com",
+        description: "Small geostationary satellite operator. MicroGEO satellites for broadband. USAF Space CAMP contract. Alaska broadband and Pacific Island government customers.",
+        sectors: ["Space", "Communications"],
+        investors: ["Andreessen Horowitz (a16z)", "Venrock"],
+        primePartners: [],
+        dualUse: "Military satellite broadband, GEO communications for remote DoD operations",
+        commercialUse: "Remote broadband internet, island and rural connectivity"
+      },
+      {
+        id: 48, name: "Xona Space Systems", founded: 2018, hq: "San Mateo, CA",
+        valuation: "$200M+", totalRaised: "$50M+", ceo: "Brian Manning", domain: "xonaspace.com",
+        description: "Commercial GPS alternative navigation constellation (PULSAR). 300x more accurate than GPS. DoD partner for GPS-denied navigation. Air Force Research Laboratory partner.",
+        sectors: ["Space", "Communications", "Sensors/ISR"],
+        investors: ["Lockheed Martin Ventures", "DCVC"],
+        primePartners: ["Lockheed Martin"],
+        dualUse: "GPS-denied military navigation, jam-resistant positioning for DoD",
+        commercialUse: "Precision agriculture, autonomous vehicle navigation, surveying"
+      },
+      {
+        id: 49, name: "Terran Orbital", founded: 2013, hq: "Boca Raton, FL",
+        valuation: "$500M+", totalRaised: "$300M+", ceo: "Marc Bell", domain: "terranorbital.com",
+        description: "Small satellite manufacturer for defense and commercial. Lockheed Martin $100M investment and major customer. Space Development Agency proliferated LEO constellation manufacturer.",
+        sectors: ["Space", "Advanced Manufacturing"],
+        investors: ["Lockheed Martin", "Beach Point Capital"],
+        primePartners: ["Lockheed Martin"],
+        dualUse: "Space Force SDA constellation, DoD small satellites, national security space programs",
+        commercialUse: "Commercial small satellite design and manufacturing"
+      },
+      {
+        id: 50, name: "Relativity Space", founded: 2015, hq: "Long Beach, CA",
+        valuation: "$4.2B+", totalRaised: "$1.3B+", ceo: "Tim Ellis", domain: "relativityspace.com",
+        description: "3D-printed rocket manufacturer. Terran R reusable medium-lift rocket in development. USAF Rocket Cargo program — using rockets to deliver cargo anywhere on Earth in 90 minutes.",
+        sectors: ["Space", "Advanced Manufacturing"],
+        investors: ["Fidelity", "BlackRock", "Tribe Capital", "DCVC"],
+        primePartners: [],
+        dualUse: "USAF Rocket Cargo rapid global resupply, responsive military launch",
+        commercialUse: "Commercial satellite launch, medium payload delivery to orbit"
+      },
+      {
+        id: 51, name: "Boom Supersonic", founded: 2014, hq: "Denver, CO",
+        valuation: "$3B+", totalRaised: "$700M+", ceo: "Blake Scholl", domain: "boomsupersonic.com",
+        description: "Developing Overture supersonic airliner and XB-1 demonstrator. Northrop Grumman special missions partnership for ISR/VIP use. American Airlines 20-aircraft pre-order.",
+        sectors: ["Aerospace", "Hypersonics"],
+        investors: ["Y Combinator", "Emerson Collective", "American Airlines"],
+        primePartners: ["Northrop Grumman"],
+        dualUse: "Military special missions (ISR, command/control), VIP transport, supersonic research",
+        commercialUse: "Supersonic commercial air travel, point-to-point business travel"
+      },
+      {
+        id: 52, name: "Stratolaunch", founded: 2011, hq: "Mojave, CA",
+        valuation: "$1B+", totalRaised: "$500M+", ceo: "Zachary Krevor", domain: "stratolaunch.com",
+        description: "Air-launch platform and hypersonic test vehicle operator. World's largest aircraft (Roc, 385ft wingspan). Talon-A hypersonic test vehicle demonstrated Mach 5+ in 2024. DARPA HAWC testbed.",
+        sectors: ["Aerospace", "Hypersonics", "Space"],
+        investors: ["Paul Allen Estate", "Cerberus Capital Management"],
+        primePartners: [],
+        dualUse: "DARPA hypersonic testbed, Air Force hypersonic weapon development, responsive space",
+        commercialUse: "Air-launch services, hypersonic R&D, reusable payload return"
+      },
+      // ── AI / Software / Analytics ──
+      {
+        id: 53, name: "Rebellion Defense", founded: 2019, hq: "Washington, DC",
+        valuation: "$1B+", totalRaised: "$250M+", ceo: "Chris Lynch", domain: "rebelliondefense.com",
+        description: "AI software for national security. Products include Nova (aerial autonomy) and Archer (AI decision support). Serves DIA, NSA, and USAF. Acquired by Shield AI in 2024.",
+        sectors: ["AI/ML", "Defense Software", "Autonomous Systems"],
+        investors: ["General Catalyst", "Shield Capital", "NEA"],
+        primePartners: [],
+        dualUse: "National security AI, autonomous mission planning, intelligence analysis",
+        commercialUse: "Enterprise AI decision support, government consulting"
+      },
+      {
+        id: 54, name: "Scale AI", founded: 2016, hq: "San Francisco, CA",
+        valuation: "$29B", totalRaised: "$15.9B", ceo: "Alexandr Wang", domain: "scale.com",
+        description: "AI data platform and enterprise AI infrastructure. Meta acquired 49% non-voting stake ($14.3B) in June 2025. DoD Thunderforge contract for military logistics AI. Co-developed Defense Llama with Meta for DoD.",
+        sectors: ["AI/ML", "Data Analytics", "Defense Software"],
+        investors: ["Meta (49%)", "Amazon", "Nvidia", "Accel", "Index Ventures"],
+        primePartners: ["Palantir Technologies"],
+        dualUse: "DoD Thunderforge AI logistics, Defense Llama military LLM, DIA and SOCOM Donovan platform",
+        commercialUse: "AI training data pipelines, RLHF, enterprise AI model evaluation for Fortune 500"
+      },
+      {
+        id: 55, name: "Primer AI", founded: 2015, hq: "San Francisco, CA",
+        valuation: "$500M+", totalRaised: "$100M+", ceo: "Sean Gourley", domain: "primer.ai",
+        description: "NLP and machine reading platform for intelligence. Automates analysis of documents, social media, and communications. Primary users are intelligence agencies, DoD, and national security clients.",
+        sectors: ["AI/ML", "Data Analytics", "Intelligence"],
+        investors: ["Amplify Partners", "Scale Venture Partners", "In-Q-Tel"],
+        primePartners: [],
+        dualUse: "Open-source intelligence, threat detection, military intelligence automation",
+        commercialUse: "Corporate intelligence, financial analysis, media monitoring"
+      },
+      {
+        id: 56, name: "Synthetaic", founded: 2019, hq: "Madison, WI",
+        valuation: "$200M+", totalRaised: "$95M+", ceo: "Corey Jaskolski", domain: "synthetaic.com",
+        description: "AI-powered image analysis using synthetic data to train models without human labeling. RAIDAR platform detects objects in satellite/drone imagery. USAF and In-Q-Tel customer.",
+        sectors: ["AI/ML", "Sensors/ISR", "Data Analytics"],
+        investors: ["In-Q-Tel", "Baird Capital", "Rally Ventures"],
+        primePartners: [],
+        dualUse: "Satellite imagery analysis, target recognition, ISR automation for military",
+        commercialUse: "Commercial satellite analytics, infrastructure inspection, wildlife monitoring"
+      },
+      {
+        id: 57, name: "Govini", founded: 2011, hq: "Washington, DC",
+        valuation: "$500M+", totalRaised: "$200M+", ceo: "Tara Murphy Dougherty", domain: "govini.com",
+        description: "AI-powered analytics for defense procurement and supply chain intelligence. Ark data platform analyzes DoD contracting. Pentagon and all four service branches as customers.",
+        sectors: ["AI/ML", "Data Analytics", "Defense Software"],
+        investors: ["Goldman Sachs", "General Atlantic"],
+        primePartners: [],
+        dualUse: "DoD supply chain analytics, procurement intelligence, defense industrial base assessment",
+        commercialUse: "Government contracting analytics, federal market intelligence"
+      },
+      {
+        id: 58, name: "C3.ai", founded: 2009, hq: "Redwood City, CA",
+        valuation: "$3B+", totalRaised: "$400M+", ceo: "Tom Siebel", domain: "c3.ai",
+        description: "Enterprise AI application software. C3 AI Defense and Homeland Security suite serves DoD, DHS, and USAF. Predictive maintenance for military equipment. Public company (AI).",
+        sectors: ["AI/ML", "Defense Software", "Data Analytics"],
+        investors: ["TPG", "Lazard"],
+        primePartners: [],
+        dualUse: "DoD predictive maintenance, defense supply chain AI, threat analytics",
+        commercialUse: "Enterprise AI for energy, financial services, manufacturing"
+      },
+      {
+        id: 59, name: "Reveal Technology", founded: 2019, hq: "Boise, ID",
+        valuation: "$200M+", totalRaised: "$30M+", ceo: "N/A", domain: "revealtech.io",
+        description: "AI-powered intelligence workflows for DoD and IC. Fern platform automates intelligence production and analysis. USAF and Army Special Forces customer. In-Q-Tel backed.",
+        sectors: ["AI/ML", "Defense Software", "Intelligence"],
+        investors: ["General Catalyst", "In-Q-Tel"],
+        primePartners: [],
+        dualUse: "Intelligence analysis automation, GEOINT, military decision support",
+        commercialUse: "Enterprise intelligence workflows, data analysis automation"
+      },
+      {
+        id: 60, name: "Overland AI", founded: 2022, hq: "Seattle, WA",
+        valuation: "$300M+", totalRaised: "$40M+", ceo: "Byron Boots", domain: "overland.ai",
+        description: "Autonomous off-road vehicle software for defense. OverDrive platform enables ground vehicles to navigate unstructured terrain. US Army and USMC contracts. Point72 Deterrence Fund backed.",
+        sectors: ["Autonomous Systems", "AI/ML", "Ground Vehicles"],
+        investors: ["Point72 Ventures", "Alumni Ventures"],
+        primePartners: [],
+        dualUse: "Autonomous military ground vehicles, unmanned convoy operations, IED avoidance",
+        commercialUse: "Mining, agriculture, industrial off-road vehicle autonomy"
+      },
+      {
+        id: 61, name: "SandboxAQ", founded: 2022, hq: "Palo Alto, CA",
+        valuation: "$5.3B+", totalRaised: "$900M+", ceo: "Jack Hidary", domain: "sandboxaq.com",
+        description: "Alphabet/Google spinout focused on quantum AI for defense, healthcare, and finance. Post-quantum cryptography and quantum sensing for national security. AFRL and NATO partner.",
+        sectors: ["AI/ML", "Cybersecurity"],
+        investors: ["T. Rowe Price", "Marc Benioff", "Ray Dalio", "Breyer Capital"],
+        primePartners: [],
+        dualUse: "Post-quantum encryption for DoD, quantum sensing for GPS-denied navigation",
+        commercialUse: "Financial risk modeling, drug discovery, enterprise network security"
+      },
+      // ── Cybersecurity ──
+      {
+        id: 62, name: "Dragos", founded: 2016, hq: "Hanover, MD",
+        valuation: "$1.7B", totalRaised: "$450M+", ceo: "Robert Lee", domain: "dragos.com",
+        description: "Industrial cybersecurity platform for OT/ICS systems. Protects power grids, oil/gas, manufacturing, and defense industrial base from nation-state cyber threats. CISA partner.",
+        sectors: ["Cybersecurity", "Data Analytics"],
+        investors: ["Koch Industries", "Schweitzer Engineering", "Energy Impact Partners"],
+        primePartners: [],
+        dualUse: "Defense industrial base cyber protection, critical infrastructure security",
+        commercialUse: "Power, oil/gas, manufacturing, water utility OT cybersecurity"
+      },
+      {
+        id: 63, name: "Shift5", founded: 2019, hq: "Arlington, VA",
+        valuation: "$300M+", totalRaised: "$145M+", ceo: "Josh Lospinoso", domain: "shift5.io",
+        description: "Onboard data and cybersecurity for military platforms. Real-time data capture and cyber defense for C-17s, Black Hawks, Abrams tanks, and weapon systems. $75M Series C.",
+        sectors: ["Cybersecurity", "Data Analytics", "Defense Software"],
+        investors: ["Booz Allen Hamilton", "Squadra Ventures", "Canaan Partners"],
+        primePartners: [],
+        dualUse: "Military aircraft cyber defense, weapon system data analytics, platform security",
+        commercialUse: "Rail and commercial aviation cybersecurity, fleet data analytics"
+      },
+      // ── Ground Robotics ──
+      {
+        id: 64, name: "Ghost Robotics", founded: 2015, hq: "Philadelphia, PA",
+        valuation: "$1B+", totalRaised: "$120M+", ceo: "Jiren Parikh", domain: "ghostrobotics.io",
+        description: "Military quadruped robots. Spirit and Vision 60 platforms deployed by USAF and Army. Tested carrying Sword Defense Systems remote weapons station. Used for perimeter security.",
+        sectors: ["Autonomous Systems", "Robotics"],
+        investors: ["Cerberus Capital Management", "Bain Capital Ventures"],
+        primePartners: [],
+        dualUse: "Base perimeter security, IED detection, armed reconnaissance, tunnel clearing",
+        commercialUse: "Industrial inspection, mining, infrastructure monitoring"
+      },
+      {
+        id: 65, name: "Gecko Robotics", founded: 2013, hq: "Pittsburgh, PA",
+        valuation: "$1B+", totalRaised: "$200M+", ceo: "Jake Loosararian", domain: "geckorobotics.com",
+        description: "Wall-climbing robots for critical infrastructure inspection. US Navy deployed for hull inspection — over $100M in military contracts. Inspects ships, boilers, tanks, and pressure vessels.",
+        sectors: ["Autonomous Systems", "Robotics", "Sensors/ISR"],
+        investors: ["Founders Fund", "Tiger Global", "Bessemer Venture Partners"],
+        primePartners: [],
+        dualUse: "Naval vessel hull inspection, submarine integrity checks, defense asset maintenance",
+        commercialUse: "Power plant inspection, oil/gas, chemical plant, nuclear facility maintenance"
+      },
+      {
+        id: 66, name: "Sarcos Technology", founded: 2000, hq: "Salt Lake City, UT",
+        valuation: "$200M+", totalRaised: "$200M+", ceo: "Ben Wolff", domain: "sarcos.com",
+        description: "Full-body robotic exoskeleton for military and industrial use. Guardian XO exoskeleton for USAF logistics. Army exoskeleton program participant for soldier load reduction.",
+        sectors: ["Autonomous Systems", "Robotics"],
+        investors: ["GE", "Microsoft", "Caterpillar"],
+        primePartners: [],
+        dualUse: "Military logistics and load handling, CBRN suit operations, soldier augmentation",
+        commercialUse: "Industrial manufacturing, construction, warehouse operations"
+      },
+      // ── Manufacturing ──
+      {
+        id: 67, name: "Machina Labs", founded: 2019, hq: "Los Angeles, CA",
+        valuation: "$500M+", totalRaised: "$100M+", ceo: "Edward Mehr", domain: "machinalabs.ai",
+        description: "AI-driven robotic sheet metal forming for aerospace and defense. Replaces expensive dies with AI-controlled robots. USAF and Army contracts. $75M Series C in 2024.",
+        sectors: ["Advanced Manufacturing", "Robotics", "AI/ML"],
+        investors: ["Foundation Capital", "DCVC", "Prelude Ventures"],
+        primePartners: [],
+        dualUse: "Defense component manufacturing, rapid tooling for military hardware programs",
+        commercialUse: "Aerospace prototyping, automotive manufacturing, consumer products"
+      },
+      {
+        id: 68, name: "Velo3D", founded: 2014, hq: "Fremont, CA",
+        valuation: "$1B+", totalRaised: "$380M+", ceo: "Brad Kreger", domain: "velo3d.com",
+        description: "Metal additive manufacturing for rockets, aerospace, and defense. Sapphire XC printer for large complex parts. Customers include SpaceX, Rocket Lab, and Lockheed Martin.",
+        sectors: ["Advanced Manufacturing", "Space"],
+        investors: ["Bessemer Venture Partners", "Khosla Ventures"],
+        primePartners: ["Lockheed Martin"],
+        dualUse: "Rocket engine parts, missile components, rapid defense component manufacturing",
+        commercialUse: "Commercial aerospace hardware, industrial parts, oil/gas equipment"
+      },
+      {
+        id: 69, name: "MACH Industries", founded: 2023, hq: "Huntington Beach, CA",
+        valuation: "$500M+", totalRaised: "$100M+", ceo: "Ethan Thornton", domain: "machindustries.co",
+        description: "Defense manufacturing company building next-gen munitions and weapons systems. $100M led by a16z American Dynamism. Software-defined production lines for DoD.",
+        sectors: ["Advanced Manufacturing", "Missiles & Munitions"],
+        investors: ["Andreessen Horowitz (a16z)", "8VC"],
+        primePartners: [],
+        dualUse: "Munitions manufacturing, DoD weapons production, rapid military hardware",
+        commercialUse: "Limited — primarily defense-focused manufacturing"
+      },
+      {
+        id: 70, name: "Divergent Technologies", founded: 2013, hq: "Torrance, CA",
+        valuation: "$1B+", totalRaised: "$400M+", ceo: "Kevin Czinger", domain: "divergent3d.com",
+        description: "Digital manufacturing platform using AI-designed, 3D-printed vehicle and weapon structures. Military vehicle, hypersonic, and missile structure manufacturing. MACH system for digital factories.",
+        sectors: ["Advanced Manufacturing", "AI/ML"],
+        investors: ["Horizons Ventures"],
+        primePartners: ["Northrop Grumman", "BAE Systems"],
+        dualUse: "Lightweight missile structures, military vehicle frames, hypersonic components",
+        commercialUse: "Automotive frame manufacturing, commercial aerospace structures"
+      },
+      // ── Communications / EW ──
+      {
+        id: 71, name: "Silvus Technologies", founded: 2004, hq: "Los Angeles, CA",
+        valuation: "$500M+", totalRaised: "$100M+", ceo: "Babak Daneshrad", domain: "silvustechnologies.com",
+        description: "Software-defined radio (SDR) and mobile mesh networking for military operations. StreamCaster radios used by all US military branches and 60+ countries worldwide. MIMO MANET technology.",
+        sectors: ["Communications", "Electronic Warfare"],
+        investors: ["Greenbriar Equity Group"],
+        primePartners: [],
+        dualUse: "Military mesh radio networks, battlefield communications, drone control datalinks",
+        commercialUse: "Industrial IoT, public safety communications, critical infrastructure"
+      },
+      {
+        id: 72, name: "Persistent Systems", founded: 2007, hq: "New York, NY",
+        valuation: "$500M+", totalRaised: "$100M+", ceo: "Herbert Rubens", domain: "persistentsystems.com",
+        description: "Tactical mesh networking for military. Wave Relay MANET radios support 500+ nodes. Used by SOCOM, Army Rangers, and NATO allies. Enables drone swarm command and control.",
+        sectors: ["Communications", "Autonomous Systems"],
+        investors: ["Draper Atlantic"],
+        primePartners: [],
+        dualUse: "Special forces tactical comms, drone swarm C2, military IoT, dismounted soldier networks",
+        commercialUse: "Emergency response, industrial monitoring, offshore platforms"
+      },
+      {
+        id: 73, name: "D-Fend Solutions", founded: 2016, hq: "Ra\u2019anana, Israel / McLean, VA",
+        valuation: "$200M+", totalRaised: "$100M+", ceo: "Zohar Halachmi", domain: "d-fendsolutions.com",
+        description: "RF cyber counter-drone technology. EnforceAir system takes non-kinetic cyber control of hostile drones. Deployed by US Army, DHS, and DOJ. Over 20 countries use the system.",
+        sectors: ["Counter-Drone", "Cybersecurity", "Electronic Warfare"],
+        investors: ["Allied Minds"],
+        primePartners: [],
+        dualUse: "Force protection counter-drone, base defense, airport/VIP/event protection",
+        commercialUse: "Critical infrastructure protection, airports, corrections, border security"
+      },
+      {
+        id: 74, name: "Near Earth Autonomy", founded: 2014, hq: "Pittsburgh, PA",
+        valuation: "$300M+", totalRaised: "$120M+", ceo: "Sanjiv Singh", domain: "nearearth.aero",
+        description: "Autonomous aviation for helicopters and eVTOL. DARPA ALIAS autonomous helicopter program partner. US Army autonomous rotorcraft program. Boeing strategic investment and partnership.",
+        sectors: ["Aerospace", "Autonomous Systems", "AI/ML"],
+        investors: ["Boeing"],
+        primePartners: ["Boeing"],
+        dualUse: "Autonomous military helicopter operations, reduced crew requirements, cargo UAV",
+        commercialUse: "Commercial autonomous helicopter, cargo UAV, medevac automation"
+      },
+      // ── Maritime ──
+      {
+        id: 75, name: "Havoc", founded: 2024, hq: "Providence, RI",
+        valuation: "N/A (Series A)", totalRaised: "$97M", ceo: "Paul Lwin", domain: "havocai.com",
+        description: "All-domain collaborative autonomy platform integrating autonomous sea, air, and land systems through a unified software stack. 32 robot boats already deployed with DoD customers globally. $85M Series A in Oct 2025 led by B Capital. Competing for $3.3B+ in Navy USV contracts.",
+        sectors: ["Autonomous Systems", "Maritime", "AI/ML"],
+        investors: ["B Capital", "In-Q-Tel", "Scout Ventures", "Lockheed Martin", "Trucks Venture Capital"],
+        primePartners: ["Lockheed Martin", "Hanwha"],
+        dualUse: "US Navy autonomous USV fleets, contested maritime logistics, distributed sensing networks, denied-comms operations",
+        commercialUse: "Commercial maritime logistics, autonomous vessel operations, industrial equipment autonomy"
+      },
+      {
+        id: 76, name: "Hydronalix", founded: 2010, hq: "Tucson, AZ",
+        valuation: "$50M+", totalRaised: "$20M+", ceo: "Tony Mulligan", domain: "hydronalix.com",
+        description: "Autonomous unmanned surface vehicles. EMILY rescue robot used by Coast Guard and Navy. Small USVs for maritime domain awareness. Sold to 30+ countries including US military.",
+        sectors: ["Autonomous Systems", "Maritime"],
+        investors: ["SBIR/STTR grants"],
+        primePartners: [],
+        dualUse: "Harbor defense, mine countermeasures, maritime domain awareness, port security",
+        commercialUse: "Water rescue, ocean research, environmental monitoring"
+      },
+      // ── Autonomous Aviation ──
+      {
+        id: 77, name: "Elroy Air", founded: 2016, hq: "San Francisco, CA",
+        valuation: "$200M+", totalRaised: "$65M+", ceo: "Dave Merrill", domain: "elroyair.com",
+        description: "Autonomous cargo VTOL aircraft (Chaparral). 300-500 lb payload, 300 mile range. USAF Agility Prime partner. FedEx strategic partnership. Hybrid-electric turbine-electric propulsion.",
+        sectors: ["Aerospace", "Autonomous Systems"],
+        investors: ["DCVC", "Lockheed Martin Ventures", "FedEx"],
+        primePartners: ["Lockheed Martin"],
+        dualUse: "Military forward operating base resupply, logistics, medevac cargo delivery",
+        commercialUse: "Last-mile cargo delivery, disaster relief, remote community supply"
+      },
+      {
+        id: 78, name: "XWing", founded: 2019, hq: "San Francisco, CA",
+        valuation: "$200M+", totalRaised: "$70M+", ceo: "Marc Piette", domain: "x.wing",
+        description: "Autonomous cargo aircraft for regional operations. UPS strategic partnership. FAA exemption for supervised autonomous operations. Cessna Caravan platform with full autonomy stack.",
+        sectors: ["Aerospace", "Autonomous Systems"],
+        investors: ["Radical Ventures", "Y Combinator"],
+        primePartners: [],
+        dualUse: "Military cargo resupply, autonomous airlift, unpiloted logistics operations",
+        commercialUse: "Regional cargo delivery, last-mile logistics, remote area supply"
+      },
+      {
+        id: 79, name: "Reliable Robotics", founded: 2017, hq: "Mountain View, CA",
+        valuation: "$300M+", totalRaised: "$130M+", ceo: "Robert Rose", domain: "reliable.aero",
+        description: "Autonomous aircraft systems for cargo. FAA certification underway for remotely piloted Cessna Caravan. DoD Agility Prime interest. Remote pilot operations center model.",
+        sectors: ["Aerospace", "Autonomous Systems"],
+        investors: ["Playground Global", "Eclipse Ventures"],
+        primePartners: [],
+        dualUse: "Autonomous military cargo, forward resupply, reduced-crew aviation operations",
+        commercialUse: "Commercial cargo delivery, regional aviation automation"
+      },
+      {
+        id: 80, name: "ZeroAvia", founded: 2017, hq: "Hollister, CA",
+        valuation: "$1B+", totalRaised: "$250M+", ceo: "Val Miftakhov", domain: "zeroavia.com",
+        description: "Hydrogen-electric aviation powertrain for commercial aircraft. ZA600 engine for 9-19 seat aircraft. Alaska Airlines, American Airlines, and United Airlines partners. UK CAA certification path.",
+        sectors: ["Aerospace", "Energy"],
+        investors: ["Amazon", "Shell Ventures", "United Airlines", "Alaska Airlines"],
+        primePartners: [],
+        dualUse: "Military green aviation, quiet ISR aircraft, forward base hydrogen logistics",
+        commercialUse: "Regional hydrogen-electric commercial aviation, zero-emission cargo"
+      },
+      // ── Energy ──
+      {
+        id: 81, name: "Helion Energy", founded: 2013, hq: "Everett, WA",
+        valuation: "$3.8B+", totalRaised: "$570M+", ceo: "David Kirtley", domain: "helionenergy.com",
+        description: "Nuclear fusion energy company. Microsoft signed world's first fusion power purchase agreement in 2023. Polaris 7th-generation fusion device demonstrated 100M°C plasma. DoE and DoD partner.",
+        sectors: ["Energy", "Advanced Manufacturing"],
+        investors: ["Sam Altman", "Mithril Capital", "Open Philanthropy"],
+        primePartners: [],
+        dualUse: "Energy independence for military installations, compact fusion for forward bases",
+        commercialUse: "Commercial fusion power generation, grid-scale clean energy"
+      },
+      {
+        id: 82, name: "TAE Technologies", founded: 1998, hq: "Foothill Ranch, CA",
+        valuation: "$2B+", totalRaised: "$1.2B+", ceo: "Michl Binderbauer", domain: "taetechnologies.com",
+        description: "Nuclear fusion and particle accelerator company. Field-reversed configuration fusion reactors. DARPA and DoE partner. Developing compact boron-proton fusion for defense applications.",
+        sectors: ["Energy", "Advanced Manufacturing"],
+        investors: ["Google", "Chevron", "Wellcome Trust"],
+        primePartners: [],
+        dualUse: "Compact fusion reactors for military bases, nuclear propulsion research, cancer treatment particle accelerators",
+        commercialUse: "Commercial fusion power generation, particle therapy cancer treatment"
+      },
+      {
+        id: 83, name: "General Fusion", founded: 2002, hq: "Richmond, Canada / Oxfordshire, UK",
+        valuation: "$1B+", totalRaised: "$400M+", ceo: "Greg Twinney", domain: "generalfusion.com",
+        description: "Magnetized Target Fusion (MTF) energy company. UK Fusion Hub demonstration plant underway. DoD Advanced Technology partner. Amazon and Chevron investors.",
+        sectors: ["Energy"],
+        investors: ["Bezos Expeditions", "BDC Capital", "Chrysalix"],
+        primePartners: [],
+        dualUse: "Compact fusion for forward military bases, strategic energy independence, DoD energy security",
+        commercialUse: "Commercial fusion power plants, industrial energy, grid decarbonization"
+      },
+      // ── Biotech / Bio-security ──
+      {
+        id: 84, name: "Ginkgo Bioworks", founded: 2009, hq: "Boston, MA",
+        valuation: "$1B+", totalRaised: "$2.4B+", ceo: "Jason Kelly", domain: "ginkgobioworks.com",
+        description: "Synthetic biology platform for biosecurity and industrial applications. Federal biosecurity contracts for pandemic preparedness and biodefense. BARDA and CDC partner. Public company (DNA).",
+        sectors: ["Biotech", "AI/ML"],
+        investors: ["Y Combinator", "Viking Global"],
+        primePartners: [],
+        dualUse: "Biodefense, CBRN threat detection, pandemic preparedness for DoD",
+        commercialUse: "Agriculture, pharmaceuticals, specialty chemicals, industrial materials"
+      },
+      // ── Space Logistics ──
+      {
+        id: 85, name: "CesiumAstro", founded: 2017, hq: "Austin, TX",
+        valuation: "$500M+", totalRaised: "$100M+", ceo: "Shey Sabripour", domain: "cesiumastro.com",
+        description: "Active phased array communication systems for satellites and aircraft. Space Force and DARPA contracts for software-defined radio and satcom payloads. Supplying comms hardware for next-gen DoD proliferated LEO constellations.",
+        sectors: ["Space", "Communications"],
+        investors: ["Prime Movers Lab", "DCVC", "Grotech Ventures"],
+        primePartners: ["Northrop Grumman", "Lockheed Martin"],
+        dualUse: "Space Force LEO satcom payloads, DARPA comms experiments, DoD PACE programs",
+        commercialUse: "Commercial satellite internet terminals, in-flight connectivity, LEO broadband ground terminals"
+      },
+      {
+        id: 86, name: "Loft Orbital", founded: 2017, hq: "San Francisco, CA",
+        valuation: "$300M+", totalRaised: "$130M+", ceo: "Pierre-Damien Vaujour", domain: "loftorbital.com",
+        description: "Satellite-as-a-service platform hosting customer payloads on standard satellites. Space Force and Air Force Research Laboratory contracts for hosted DoD payloads.",
+        sectors: ["Space", "Advanced Manufacturing"],
+        investors: ["Sony Ventures", "Tokio Marine", "OAK Investment Partners"],
+        primePartners: [],
+        dualUse: "AFRL hosted payload experiments, Space Force demonstration, DoD sensor deployment",
+        commercialUse: "Commercial payload hosting, Earth observation, communications demonstrations"
+      },
+      {
+        id: 87, name: "Mynaric", founded: 2009, hq: "Munich, Germany / El Segundo, CA",
+        valuation: "$200M+", totalRaised: "$100M+", ceo: "Mustafa Veziroglu", domain: "mynaric.com",
+        description: "Laser communications terminals for satellites and aircraft. CONDOR Mk3 for satellite constellations. DISA, Space Development Agency, and DARPA customer for Space Force LEO optical comm links.",
+        sectors: ["Space", "Communications"],
+        investors: ["Airbus"],
+        primePartners: [],
+        dualUse: "Space Force optical communications, DISA secure satellite links, classified high-bandwidth comms",
+        commercialUse: "Commercial satellite laser links, high-capacity data relay, LEO broadband"
+      },
+      {
+        id: 88, name: "York Space Systems", founded: 2016, hq: "Denver, CO",
+        valuation: "$500M+", totalRaised: "$130M+", ceo: "Dirk Wallinger", domain: "york.space",
+        description: "Satellite bus manufacturer for DoD and commercial. S-CLASS platform for proliferated LEO constellations. Space Development Agency tranche orders. USAF Space CAMP recipient.",
+        sectors: ["Space", "Advanced Manufacturing"],
+        investors: ["Bessemer Venture Partners"],
+        primePartners: [],
+        dualUse: "Space Force proliferated LEO satellites, DoD communications constellation, SDA tranche deliveries",
+        commercialUse: "Commercial Earth observation, IoT, and communications satellite buses"
+      },
+      {
+        id: 89, name: "ABL Space Systems", founded: 2017, hq: "El Segundo, CA",
+        valuation: "$2.4B+", totalRaised: "$370M+", ceo: "Harry O\u2019Hanley", domain: "ablspacesystems.com",
+        description: "Small launch company with containerized RS1 rocket. US Space Force contract for responsive launch. Lockheed Martin lead customer and investor. Launches from any prepared site globally.",
+        sectors: ["Space", "Advanced Manufacturing"],
+        investors: ["Founders Fund", "Lockheed Martin"],
+        primePartners: ["Lockheed Martin"],
+        dualUse: "Space Force responsive launch from dispersed sites, DoD small satellite deployment",
+        commercialUse: "Commercial small satellite launch, global containerized launch capability"
+      },
+      {
+        id: 90, name: "Firefly Aerospace", founded: 2017, hq: "Cedar Park, TX",
+        valuation: "$2B+", totalRaised: "$400M+", ceo: "Jason Kim", domain: "firefly.com",
+        description: "Small launch provider (Alpha rocket) and lunar landers. NASA CLPS Blue Ghost lunar lander program. Northrop Grumman partnership for Medium Launch Vehicle.",
+        sectors: ["Space", "Advanced Manufacturing"],
+        investors: ["AE Industrial Partners"],
+        primePartners: ["Northrop Grumman", "NASA"],
+        dualUse: "DoD small satellite responsive launch, Space Force contracts, lunar logistics for DoD",
+        commercialUse: "Commercial small satellite launch, NASA lunar surface delivery"
+      },
+      // ── AI for Autonomous Platforms ──
+      {
+        id: 91, name: "Skydweller Aero", founded: 2019, hq: "Oklahoma City, OK",
+        valuation: "$500M+", totalRaised: "$100M+", ceo: "Robert Miller", domain: "skydweller.com",
+        description: "Solar-powered unlimited endurance unmanned aircraft for ISR. Based on Solar Impulse technology. US Navy and Air Force contracts for persistent maritime and overland surveillance.",
+        sectors: ["Aerospace", "Sensors/ISR", "Autonomous Systems"],
+        investors: ["Leonardo DRS", "Talespin"],
+        primePartners: [],
+        dualUse: "Persistent maritime ISR, unlimited endurance SIGINT collection, US Navy surveillance",
+        commercialUse: "Telecommunications relay, environmental monitoring, precision agriculture"
+      },
+      {
+        id: 92, name: "Iris Automation", founded: 2015, hq: "Reno, NV",
+        valuation: "$200M+", totalRaised: "$60M+", ceo: "Alexander Harmsen", domain: "irisautomation.com",
+        description: "Detect-and-avoid AI for drones enabling beyond visual line of sight (BVLOS) flight. FAA BVLOS waivers secured. USAF, DoD drone programs, and commercial pipeline inspection customer.",
+        sectors: ["Autonomous Systems", "AI/ML", "Sensors/ISR"],
+        investors: ["Bee Partners", "Airbus Ventures"],
+        primePartners: [],
+        dualUse: "Military BVLOS drone operations, autonomous sense-and-avoid for defense UAVs",
+        commercialUse: "Commercial drone delivery, infrastructure inspection, BVLOS cargo"
+      },
+      {
+        id: 93, name: "Standard Bots", founded: 2022, hq: "New York, NY",
+        valuation: "$200M+", totalRaised: "$45M+", ceo: "Evan Sherwood", domain: "standardbots.com",
+        description: "AI-powered industrial robots with simple programming. RO1 robot arm with subscription model. Reducing manufacturing cost barriers for defense supply chain SMEs.",
+        sectors: ["Robotics", "Advanced Manufacturing", "AI/ML"],
+        investors: ["General Catalyst"],
+        primePartners: [],
+        dualUse: "Defense supply chain manufacturing automation, munitions production, assembly",
+        commercialUse: "Small manufacturer automation, warehouse logistics, assembly line"
+      },
+      {
+        id: 94, name: "HEO Robotics", founded: 2018, hq: "Sydney, Australia / Colorado Springs, CO",
+        valuation: "$200M+", totalRaised: "$50M+", ceo: "Will Sherlock", domain: "heo.com",
+        description: "Space domain awareness via hosted payloads on commercial satellites. Images and characterizes objects in orbit. US Space Force customer for foreign satellite inspection.",
+        sectors: ["Space", "Sensors/ISR"],
+        investors: ["Possible Ventures", "Techstart Ventures"],
+        primePartners: [],
+        dualUse: "Space Force SDA, foreign satellite characterization, orbital threat assessment",
+        commercialUse: "Commercial satellite health monitoring, space traffic management"
+      },
+      {
+        id: 95, name: "Zipline", founded: 2014, hq: "South San Francisco, CA",
+        valuation: "$4.2B+", totalRaised: "$900M+", ceo: "Keller Rinaudo Cliffton", domain: "flyzipline.com",
+        description: "Autonomous drone delivery network for medical supplies and logistics. Serves Ghana, Rwanda, US hospitals. USAID and DoD interest for forward medical resupply. Platform 2 enables precise home delivery.",
+        sectors: ["Aerospace", "Autonomous Systems"],
+        investors: ["Google Ventures", "Goldman Sachs", "Andreessen Horowitz (a16z)"],
+        primePartners: [],
+        dualUse: "Forward operating base medical resupply, military humanitarian logistics, blood/supply delivery",
+        commercialUse: "Hospital medical supply delivery, retail logistics, food delivery"
+      },
+      {
+        id: 96, name: "Anzu Robotics", founded: 2023, hq: "New York, NY",
+        valuation: "$200M+", totalRaised: "$25M+", ceo: "Randall Warnas", domain: "anzurobotic.com",
+        description: "US-manufactured counter-DJI drone alternative. Raptor drones built in the US with no Chinese components — addressing Congressional concerns about DJI. DoD approved for federal use.",
+        sectors: ["Drones", "Autonomous Systems"],
+        investors: ["Anzu Robotics investors"],
+        primePartners: [],
+        dualUse: "DoD-compliant drone fleet replacement, domestic ISR drone manufacturing",
+        commercialUse: "Commercial inspection, mapping, public safety — DJI alternative"
+      },
+      {
+        id: 97, name: "SparkCognition", founded: 2013, hq: "Austin, TX",
+        valuation: "$1B+", totalRaised: "$200M+", ceo: "Amir Husain", domain: "sparkcognition.com",
+        description: "AI for industrial, defense, and government. SparkCognition Defense and Darwin AI products. Boeing partnership. Predictive maintenance and autonomous system AI for national security.",
+        sectors: ["AI/ML", "Defense Software", "Autonomous Systems"],
+        investors: ["Boeing", "March Capital", "Verizon Ventures"],
+        primePartners: ["Boeing"],
+        dualUse: "Defense AI decision support, autonomous system control, predictive maintenance for military assets",
+        commercialUse: "Energy industry AI, industrial predictive maintenance, financial fraud detection"
+      },
+      {
+        id: 98, name: "Satellogic", founded: 2010, hq: "Buenos Aires, Argentina / Bethesda, MD",
+        valuation: "$500M+", totalRaised: "$300M+", ceo: "Emiliano Kargieman", domain: "satellogic.com",
+        description: "High-frequency Earth observation satellite operator. Sub-meter multispectral imagery. NRO contract and State Department export license. 36+ satellites with frequent revisit. Public company (SATL).",
+        sectors: ["Space", "Sensors/ISR"],
+        investors: ["SoftBank Vision Fund", "Tether Investments"],
+        primePartners: [],
+        dualUse: "NRO imagery intelligence, defense ISR, change detection for IC customers",
+        commercialUse: "Agriculture monitoring, infrastructure, natural resource, environmental surveillance"
+      },
+      {
+        id: 99, name: "Evolv Technology", founded: 2013, hq: "Waltham, MA",
+        valuation: "$500M+", totalRaised: "$200M+", ceo: "Peter George", domain: "evolvtechnology.com",
+        description: "AI-powered weapons detection screening using millimeter-wave sensors. TSA, DoD, and DHS deployed. Screens 1,000+ people/hour without stopping. Replaces traditional metal detectors at military bases.",
+        sectors: ["AI/ML", "Sensors/ISR", "Cybersecurity"],
+        investors: ["Bill Gates", "General Catalyst", "Tiger Global"],
+        primePartners: [],
+        dualUse: "Military base access control, force protection screening, DoD facility security",
+        commercialUse: "Stadium, school, hospital, venue, airport security screening"
+      },
+      {
+        id: 100, name: "Orbital Sidekick", founded: 2016, hq: "San Francisco, CA",
+        valuation: "$250M+", totalRaised: "$75M+", ceo: "George Mathew", domain: "orbitalsidekick.com",
+        description: "Hyperspectral satellite intelligence for infrastructure monitoring and national security. Space Force STRATFI award. Aurora constellation provides persistent hyperspectral imagery identifying chemical signatures invisible to standard cameras.",
+        sectors: ["Space", "AI/ML"],
+        investors: ["DCVC", "Playground Global", "In-Q-Tel"],
+        primePartners: [],
+        dualUse: "Space Force hyperspectral ISR, WMD facility detection, chemical plume monitoring, STRATFI recipient",
+        commercialUse: "Pipeline leak detection, crop health monitoring, illegal mining identification"
+      },
+    ];
+
+    const FUNDING_ROUNDS = [
+      { company: "Anduril Industries", round: "Series G", amount: "$2.5B", date: "Summer 2025", leadInvestor: "Founders Fund", valuation: "$30.5B" },
+      { company: "Anduril Industries", round: "Series F", amount: "$1.5B", date: "Aug 2024", leadInvestor: "Founders Fund / Sands Capital", valuation: "$14B" },
+      { company: "Helsing", round: "Series D", amount: "~$694M", date: "Summer 2025", leadInvestor: "Undisclosed", valuation: "$12B+" },
+      { company: "Helsing", round: "Series C", amount: "~$489M", date: "Jul 2024", leadInvestor: "General Catalyst", valuation: "$5.4B" },
+      { company: "Commonwealth Fusion", round: "Series B2", amount: "$863M", date: "2025", leadInvestor: "Multiple", valuation: "$5B+" },
+      { company: "Saronic", round: "Series C", amount: "$600M", date: "Feb 2025", leadInvestor: "Elad Gil / General Catalyst", valuation: "$4B" },
+      { company: "Saronic", round: "Series B", amount: "$175M", date: "2024", leadInvestor: "Andreessen Horowitz", valuation: "$1B" },
+      { company: "Applied Intuition", round: "Series E", amount: "$600M", date: "Jun 2025", leadInvestor: "Undisclosed", valuation: "$15B" },
+      { company: "Chaos Industries", round: "Growth", amount: "$510M", date: "Nov 2025", leadInvestor: "Valor Equity Partners", valuation: "$4.5B" },
+      { company: "Chaos Industries", round: "Series C", amount: "$275M", date: "Sep 2025", leadInvestor: "Accel", valuation: "$4.5B" },
+      { company: "Castelion", round: "Series B", amount: "$350M", date: "2025", leadInvestor: "Undisclosed", valuation: "$1B+" },
+      { company: "Castelion", round: "Series A", amount: "$100M", date: "2024", leadInvestor: "Lightspeed Venture Partners", valuation: "N/A" },
+      { company: "Hadrian", round: "Series C", amount: "$260M", date: "Jul 2025", leadInvestor: "Founders Fund / Lux Capital", valuation: "$2B+" },
+      { company: "Skydio", round: "Series E ext.", amount: "$170M", date: "Nov 2024", leadInvestor: "Undisclosed", valuation: "$2.2B" },
+      { company: "Ursa Major", round: "Series E", amount: "$100M", date: "Nov 2025", leadInvestor: "Undisclosed", valuation: "$1B+" },
+      { company: "Nominal", round: "Series B", amount: "$75M", date: "2025", leadInvestor: "Sequoia Capital", valuation: "$500M+" },
+      { company: "Firestorm", round: "Series A", amount: "$20M", date: "Oct 2024", leadInvestor: "Undisclosed", valuation: "N/A" },
+      { company: "Firestorm", round: "Seed", amount: "$12.5M", date: "Mar 2024", leadInvestor: "Lockheed Martin Ventures", valuation: "N/A" },
+      { company: "Pryzm", round: "Seed", amount: "$12.2M", date: "2025", leadInvestor: "Andreessen Horowitz", valuation: "N/A" },
+      { company: "JetZero", round: "Series B", amount: "$175M", date: "Jan 2026", leadInvestor: "Undisclosed", valuation: "$1B+" },
+    ];
+
+    const DEFENSE_PRIMES = [
+      {
+        name: "Lockheed Martin", ventureArm: "Lockheed Martin Ventures", domain: "lockheedmartin.com",
+        startupPartners: ["Firestorm", "Saildrone", "Terran Orbital", "Hadrian", "Shield AI"],
+        relationship: "Strategic investor ($400M evergreen fund), pilot customer, acquisition target pipeline. $50M investment in Saildrone for armed USV integration."
+      },
+      {
+        name: "RTX (Raytheon)", ventureArm: "RTX Ventures", domain: "rtx.com",
+        startupPartners: ["Ursa Major", "Hermeus", "EnCharge AI", "Tomorrow.io", "Hadrian"],
+        relationship: "Strategic investor (evaluates 1,000/yr, invests ~1%). For every $1 RTX invests, $16 from co-investors. Joint development on hypersonics and propulsion."
+      },
+      {
+        name: "Boeing", ventureArm: "Boeing HorizonX / AEI HorizonX", domain: "boeing.com",
+        startupPartners: ["Anduril Industries", "SparkCognition", "Near Earth Autonomy"],
+        relationship: "Joint proposals (Boeing-Anduril IFPC interceptor bid). Venture investment portfolio of 51 companies. Competing for $6B CCA program."
+      },
+      {
+        name: "Northrop Grumman", ventureArm: "N/A", domain: "northropgrumman.com",
+        startupPartners: ["Ursa Major", "SpaceX", "Hadrian", "Boom Supersonic"],
+        relationship: "Supply chain partner, prime contractor integration. Partnership with Boom for special missions aircraft."
+      },
+      {
+        name: "General Dynamics", ventureArm: "N/A", domain: "gd.com",
+        startupPartners: [],
+        relationship: "Traditional prime with $109.9B backlog (Q3 2025). Less startup engagement than peers but largest defense order book."
+      },
+      {
+        name: "L3Harris", ventureArm: "N/A", domain: "l3harris.com",
+        startupPartners: ["Epirus", "SpaceX"],
+        relationship: "Technology integration partner, subcontractor relationships. Directed energy and space systems focus."
+      },
+      {
+        name: "BAE Systems", ventureArm: "N/A", domain: "baesystems.com",
+        startupPartners: ["Ursa Major"],
+        relationship: "Partnerships in propulsion and advanced manufacturing. Growing engagement with U.S. defense tech startups."
+      },
+      {
+        name: "Palantir Technologies", ventureArm: "N/A (Consortium leader)", domain: "palantir.com",
+        startupPartners: ["Anduril Industries", "Shield AI", "SpaceX", "OpenAI", "Saronic", "Scale AI"],
+        relationship: "Formed 'neoprime' defense consortium in Dec 2024 to jointly bid on Pentagon contracts vs. traditional primes. $10B enterprise agreement."
+      },
+    ];
+
+    const SECTORS = [
+      "All", "AI/ML", "Autonomous Systems", "Counter-Drone", "Cybersecurity", "Drones",
+      "Directed Energy", "Energy", "Hypersonics", "Manufacturing", "Maritime", "Missiles & Munitions",
+      "Robotics", "Space", "Data Analytics"
+    ];
+
+    const FUND_TYPES = ["All", "Traditional VC", "Defense-Focused VC", "Corporate VC", "Government VC", "Hedge Fund VC", "Growth Equity"];
+
+    // ── Styles: Space Shuttle Helvetica ───────────────────────────────────────
+    const S = {
+      bg: "#ffffff",
+      bgCard: "#ffffff",
+      bgHeader: "#000000",
+      text: "#000000",
+      textMuted: "#666666",
+      textLight: "#999999",
+      border: "#e0e0e0",
+      borderLight: "#f0f0f0",
+      accent: "#000000",
+      accentHover: "#333333",
+      green: "#000000",
+      red: "#000000",
+      blue: "#000000",
+      purple: "#000000",
+      orange: "#000000",
+    };
+
+    function Badge({ children, color = "blue" }) {
+      return React.createElement("span", {
+        style: {
+          display: "inline-block", padding: "3px 10px",
+          fontSize: 10, fontWeight: 700, marginRight: 6, marginBottom: 6,
+          background: "#000", color: "#fff",
+          letterSpacing: "0.08em", textTransform: "uppercase",
+          fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif"
+        }
+      }, children);
+    }
+
+    function BadgeOutline({ children }) {
+      return React.createElement("span", {
+        style: {
+          display: "inline-block", padding: "3px 10px",
+          fontSize: 10, fontWeight: 700, marginRight: 6, marginBottom: 6,
+          background: "transparent", color: "#000",
+          border: "1.5px solid #000",
+          letterSpacing: "0.08em", textTransform: "uppercase",
+          fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif"
+        }
+      }, children);
+    }
+
+    function BadgeGray({ children }) {
+      return React.createElement("span", {
+        style: {
+          display: "inline-block", padding: "3px 10px",
+          fontSize: 10, fontWeight: 500, marginRight: 6, marginBottom: 6,
+          background: "#f5f5f5", color: "#333",
+          letterSpacing: "0.06em", textTransform: "uppercase",
+          fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif"
+        }
+      }, children);
+    }
+
+    function StatCard({ label, value, sub }) {
+      return React.createElement("div", {
+        style: {
+          background: "#fff", borderBottom: "4px solid #000", padding: "48px 40px"
+        }
+      },
+        React.createElement("div", { style: { fontSize: 10, color: "#888", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.22em", marginBottom: 20 } }, label),
+        React.createElement("div", { style: { fontSize: 96, fontWeight: 900, color: "#000", lineHeight: 0.9, fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", letterSpacing: "-0.04em" } }, value),
+        sub && React.createElement("div", { style: { fontSize: 12, color: "#888", marginTop: 20, letterSpacing: "0.08em", textTransform: "uppercase", fontWeight: 600 } }, sub)
+      );
+    }
+
+    function Cite({ n, href }) {
+      return React.createElement("a", {
+        href, target: "_blank", rel: "noopener noreferrer",
+        style: { fontSize: 10, fontWeight: 700, verticalAlign: "super", color: "#e00000",
+          textDecoration: "none", marginLeft: 1, letterSpacing: 0 }
+      }, n);
+    }
+
+    function SearchBar({ value, onChange, placeholder }) {
+      return React.createElement("input", {
+        type: "text", value, placeholder,
+        onChange: (e) => onChange(e.target.value),
+        style: {
+          width: "100%", padding: "12px 16px", border: "2px solid #000",
+          background: "#fff", fontSize: 13, outline: "none",
+          fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
+          fontWeight: 500, letterSpacing: "0.02em"
+        }
+      });
+    }
+
+    function Select({ value, onChange, options }) {
+      return React.createElement("select", {
+        value, onChange: (e) => onChange(e.target.value),
+        style: {
+          padding: "12px 16px", border: "2px solid #000",
+          background: "#fff", fontSize: 13,
+          fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
+          fontWeight: 500, cursor: "pointer", letterSpacing: "0.02em"
+        }
+      }, options.map(o => React.createElement("option", { key: o, value: o }, o)));
+    }
+
+    // ── Tab Views ─────────────────────────────────────────────────────────────
+
+    const RSS_FEEDS = [
+      { name: "DEFENSE ONE",     url: "https://www.defenseone.com/rss/all/" },
+      { name: "BREAKING DEFENSE",url: "https://breakingdefense.com/feed/" },
+      { name: "DEFENSE NEWS",    url: "https://www.defensenews.com/arc/outboundfeeds/rss/" },
+      { name: "C4ISRNET",        url: "https://www.c4isrnet.com/arc/outboundfeeds/rss/" },
+    ];
+
+    const CACHE_KEY = "dualuse_news_cache";
+    const CACHE_TTL = 15 * 60 * 1000; // 15 minutes
+
+    function NewsSection() {
+      const [articles, setArticles] = React.useState([]);
+      const [loading, setLoading] = React.useState(true);
+      const [cachedAt, setCachedAt] = React.useState(null);
+      const [refreshing, setRefreshing] = React.useState(false);
+
+      React.useEffect(() => {
+        // 1. Show cached articles instantly if available
+        try {
+          const raw = localStorage.getItem(CACHE_KEY);
+          if (raw) {
+            const { articles: cached, ts } = JSON.parse(raw);
+            if (cached?.length) {
+              // Rehydrate date strings back to Date objects
+              const hydrated = cached.map(a => ({ ...a, date: new Date(a.date) }));
+              setArticles(hydrated);
+              setLoading(false);
+              setCachedAt(new Date(ts));
+              // Skip fresh fetch if cache is < TTL
+              if (Date.now() - ts < CACHE_TTL) return;
+              setRefreshing(true);
+            }
+          }
+        } catch(e) {}
+
+        const parseXML = (xmlStr) => {
+          if (!xmlStr) return [];
+          if (xmlStr.startsWith("data:")) {
+            try { xmlStr = atob(xmlStr.split(",")[1]); } catch(e) { return []; }
+          }
+          const xml = new DOMParser().parseFromString(xmlStr, "text/xml");
+          return [...xml.querySelectorAll("item")].slice(0, 6).map(item => {
+            const getText = (tag) => item.querySelector(tag)?.textContent?.trim() || "";
+            const link = getText("link") || getText("guid");
+            const title = getText("title").replace(/<!\[CDATA\[|\]\]>/g, "").trim();
+            const pubDate = getText("pubDate");
+            return { title, link, date: pubDate ? new Date(pubDate) : new Date(0) };
+          }).filter(a => a.title && a.link);
+        };
+
+        const fetchFeed = async (feed) => {
+          const controller = new AbortController();
+          const timer = setTimeout(() => controller.abort(), 8000);
+          try {
+            const res = await fetch(
+              "https://api.allorigins.win/get?url=" + encodeURIComponent(feed.url),
+              { signal: controller.signal }
+            );
+            clearTimeout(timer);
+            const data = await res.json();
+            return parseXML(data.contents).map(a => ({ ...a, source: feed.name }));
+          } catch (e) {
+            clearTimeout(timer);
+            return [];
+          }
+        };
+
+        Promise.all(RSS_FEEDS.map(fetchFeed)).then(results => {
+          const all = results.flat()
+            .filter(a => a.title && a.link)
+            .sort((a, b) => b.date - a.date)
+            .slice(0, 12);
+          if (all.length > 0) {
+            const now = Date.now();
+            try {
+              localStorage.setItem(CACHE_KEY, JSON.stringify({ articles: all, ts: now }));
+            } catch(e) {}
+            setArticles(all);
+            setCachedAt(new Date(now));
+          }
+          setLoading(false);
+          setRefreshing(false);
+        });
+      }, []);
+
+      const fmt = (d) => {
+        const h = Math.floor((Date.now() - d) / 3600000);
+        const days = Math.floor(h / 24);
+        if (h < 1) return "JUST NOW";
+        if (h < 24) return h + "H AGO";
+        if (days < 7) return days + "D AGO";
+        return d.toLocaleDateString("en-US", { month: "short", day: "numeric" }).toUpperCase();
+      };
+
+      return React.createElement("div", { style: { marginBottom: 72, borderTop: "4px solid #000" } },
+        React.createElement("div", {
+          style: {
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            padding: "18px 24px 20px", borderBottom: "1px solid #e0e0e0", marginBottom: 0
+          }
+        },
+          React.createElement("div", {
+            className: "du-news-label",
+            style: { fontSize: 10, fontWeight: 700, letterSpacing: "0.28em", textTransform: "uppercase", whiteSpace: "nowrap" }
+          }, "Defense Tech News"),
+          React.createElement("div", {
+            style: { fontSize: 9, fontWeight: 700, letterSpacing: "0.2em", color: "#999", textTransform: "uppercase", textAlign: "right" }
+          },
+            loading
+              ? "LOADING..."
+              : React.createElement(React.Fragment, null,
+                  RSS_FEEDS.map(f => f.name).join("  ·  "),
+                  refreshing && React.createElement("span", { style: { color: "#e00000", marginLeft: 12 } }, "↻ UPDATING"),
+                  cachedAt && !refreshing && React.createElement("span", { style: { display: "block", marginTop: 3, fontSize: 8, color: "#ccc" } },
+                    "UPDATED " + fmt(cachedAt)
+                  )
+                )
+          )
+        ),
+        (loading || articles.length === 0)
+          ? React.createElement("div", {
+              className: "du-grid-news", style: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 0 }
+            },
+              Array.from({ length: 8 }).map((_, i) =>
+                React.createElement("div", {
+                  key: i,
+                  style: {
+                    padding: "22px 28px 22px 24px",
+                    borderBottom: "1px solid #e0e0e0",
+                    borderRight: "1px solid #e0e0e0",
+                  }
+                },
+                  React.createElement("div", { style: { width: 80, height: 8, background: "#f0f0f0", marginBottom: 12 } }),
+                  React.createElement("div", { style: { width: "90%", height: 12, background: "#f0f0f0", marginBottom: 6 } }),
+                  React.createElement("div", { style: { width: "75%", height: 12, background: "#f0f0f0", marginBottom: 6 } }),
+                  React.createElement("div", { style: { width: "50%", height: 12, background: "#f0f0f0", marginBottom: 16 } }),
+                  React.createElement("div", { style: { width: 48, height: 8, background: "#f4f4f4" } })
+                )
+              )
+            )
+          : React.createElement("div", {
+                className: "du-grid-news", style: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 0 }
+              },
+                articles.map((a, i) =>
+                  React.createElement("a", {
+                    key: i,
+                    href: a.link,
+                    target: "_blank",
+                    rel: "noopener noreferrer",
+                    style: {
+                      display: "block", padding: "22px 28px 22px 24px",
+                      borderBottom: "1px solid #e0e0e0",
+                      borderRight: "1px solid #e0e0e0",
+                      textDecoration: "none", color: "inherit",
+                      background: "#fff", transition: "background 0.1s",
+                    },
+                    onMouseEnter: (e) => e.currentTarget.style.background = "rgba(0,0,0,0.025)",
+                    onMouseLeave: (e) => e.currentTarget.style.background = "#fff",
+                  },
+                    React.createElement("div", {
+                      style: { fontSize: 9, fontWeight: 700, letterSpacing: "0.22em", color: "#e00000", marginBottom: 9, textTransform: "uppercase" }
+                    }, a.source),
+                    React.createElement("div", {
+                      style: { fontSize: 14, fontWeight: 700, lineHeight: 1.35, letterSpacing: "-0.015em", marginBottom: 12 }
+                    }, a.title),
+                    React.createElement("div", {
+                      style: { fontSize: 9, fontWeight: 700, letterSpacing: "0.18em", color: "#bbb", textTransform: "uppercase" }
+                    }, fmt(a.date))
+                  )
+                )
+              )
+      );
+    }
+
+    function OverviewTab() {
+      return React.createElement("div", null,
+        React.createElement(NewsSection),
+        React.createElement("div", { className: "du-grid-2col", style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 64 } },
+          React.createElement("div", null,
+            React.createElement("h3", { style: { fontSize: 32, fontWeight: 900, letterSpacing: "-0.02em", marginBottom: 32, paddingBottom: 20, borderBottom: "4px solid #000" } }, "Market Overview"),
+            React.createElement("div", { style: { fontSize: 14, lineHeight: 1.8, color: "#333" } },
+              React.createElement("p", { style: { marginBottom: 16 } },
+                "Defense tech venture funding hit $49.1B in 2025, nearly doubling from $27.2B in 2024. Equity funding for defense tech startups more than doubled to $17.9B.",
+                React.createElement(Cite, { n: "1", href: "https://pitchbook.com" })
+              ),
+              React.createElement("p", { style: { marginBottom: 16 } },
+                "Nearly 8% of all global VC funding now goes to defense tech. The number of firms actively investing increased 41% in 2025.",
+                React.createElement(Cite, { n: "2", href: "https://axios.com" })
+              ),
+              React.createElement("p", { style: { marginBottom: 16 } },
+                "825 startups are now classified as \u2018dual-use defense tech\u2019 \u2014 companies that began with civilian technologies and later evolved to include defense solutions.",
+                React.createElement(Cite, { n: "3", href: "https://govini.com" })
+              ),
+              React.createElement("p", null,
+                "Trump administration proposed 13.4% defense budget increase to $1.01 trillion for FY2026.",
+                React.createElement(Cite, { n: "4", href: "https://defensenews.com" })
+              )
+            )
+          ),
+          React.createElement("div", null,
+            React.createElement("h3", { style: { fontSize: 32, fontWeight: 900, letterSpacing: "-0.02em", marginBottom: 32, paddingBottom: 20, borderBottom: "4px solid #000" } }, "Biggest Rounds"),
+            React.createElement("div", null,
+              [...FUNDING_ROUNDS].sort((a, b) => {
+                const p = (s) => { const n = parseFloat(s.replace(/[^0-9.]/g, "")); return s.includes("B") ? n * 1000 : n; };
+                return p(b.amount) - p(a.amount);
+              }).slice(0, 15).map((r, i) =>
+                React.createElement("div", {
+                  key: i,
+                  style: {
+                    display: "flex", justifyContent: "space-between", alignItems: "baseline",
+                    padding: "10px 0", borderBottom: i < 14 ? "1px solid #e0e0e0" : "none",
+                    fontSize: 13
+                  }
+                },
+                  React.createElement("div", null,
+                    React.createElement("span", { style: { fontWeight: 700, letterSpacing: "0.01em" } }, r.company),
+                    React.createElement("span", { style: { color: "#999", marginLeft: 10, fontSize: 10, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.08em" } }, r.round)
+                  ),
+                  React.createElement("div", { style: { textAlign: "right", whiteSpace: "nowrap" } },
+                    React.createElement("span", { style: { fontWeight: 900, fontSize: 20, letterSpacing: "-0.02em" } }, r.amount),
+                    React.createElement("span", { style: { color: "#888", marginLeft: 12, fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", fontWeight: 600 } }, r.date)
+                  )
+                )
+              )
+            )
+          )
+        ),
+      );
+    }
+
+    function FundsTab() {
+      const [search, setSearch] = useState("");
+      const [typeFilter, setTypeFilter] = useState("All");
+      const [sectorFilter, setSectorFilter] = useState("All");
+      const [expanded, setExpanded] = useState(null);
+
+      const filtered = useMemo(() => {
+        return VC_FUNDS.filter(f => {
+          const ms = !search || f.name.toLowerCase().includes(search.toLowerCase()) || f.description.toLowerCase().includes(search.toLowerCase());
+          const mt = typeFilter === "All" || f.type === typeFilter;
+          const mc = sectorFilter === "All" || f.sectors.includes(sectorFilter);
+          return ms && mt && mc;
+        });
+      }, [search, typeFilter, sectorFilter]);
+
+      return React.createElement("div", null,
+        React.createElement("div", { style: { display: "flex", gap: 12, marginBottom: 40, flexWrap: "wrap" } },
+          React.createElement("div", { style: { flex: 1, minWidth: 200 } }, React.createElement(SearchBar, { value: search, onChange: setSearch, placeholder: "Search funds..." })),
+          React.createElement(Select, { value: typeFilter, onChange: setTypeFilter, options: FUND_TYPES }),
+          React.createElement(Select, { value: sectorFilter, onChange: setSectorFilter, options: SECTORS })
+        ),
+        React.createElement("div", { style: { fontSize: 10, color: "#999", marginBottom: 16, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.15em" } }, filtered.length + " fund" + (filtered.length !== 1 ? "s" : "")),
+        React.createElement("div", { className: "du-grid-cards", style: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(480px, 1fr))", gap: 0 } },
+          filtered.map((f, idx) =>
+            React.createElement("div", {
+              key: f.id + "-" + idx,
+              style: {
+                background: "#fff",
+                borderBottom: "1px solid #000",
+                borderRight: "1px solid #000",
+                cursor: "pointer",
+                transition: "background 0.1s",
+              },
+              onClick: () => setExpanded(expanded === f.id ? null : f.id),
+              onMouseEnter: (e) => e.currentTarget.style.background = "rgba(0,0,0,0.03)",
+              onMouseLeave: (e) => e.currentTarget.style.background = "#fff"
+            },
+              React.createElement("div", { style: { padding: "32px" } },
+                React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 16, marginBottom: 14 } },
+                  React.createElement("a", {
+                    href: f.domain ? "https://" + f.domain : undefined,
+                    target: "_blank", rel: "noopener noreferrer",
+                    onClick: (e) => e.stopPropagation(),
+                    style: { display: "flex", alignItems: "center", gap: 16, flex: 1, textDecoration: "none", color: "inherit" }
+                  },
+                    React.createElement(Logo, { domain: f.domain, name: f.name, size: 36 }),
+                    React.createElement("div", { style: { flex: 1 } },
+                      React.createElement("div", { style: { fontWeight: 700, fontSize: 18, letterSpacing: "0.01em" } }, f.name),
+                      React.createElement("div", { style: { fontSize: 11, color: "#888", marginTop: 4, letterSpacing: "0.08em", textTransform: "uppercase", fontWeight: 600 } }, f.hq, " \u00b7 AUM: ", f.aum, " \u00b7 ", f.stage)
+                    )
+                  ),
+                  React.createElement(BadgeOutline, null, f.type)
+                ),
+                f.defenseThesis && React.createElement("div", { style: { fontSize: 12, color: "#000", fontWeight: 700, marginBottom: 10, letterSpacing: "0.04em", textTransform: "uppercase" } }, "Thesis: " + f.defenseThesis),
+                f.notableInvestments.length > 0 && React.createElement("div", { style: { marginTop: 8 } },
+                  f.notableInvestments.slice(0, 5).map(c => React.createElement(BadgeGray, { key: c }, c)),
+                  f.notableInvestments.length > 5 && React.createElement("span", { style: { fontSize: 10, color: "#888", letterSpacing: "0.08em", fontWeight: 700 } }, "+" + (f.notableInvestments.length - 5) + " more")
+                ),
+                expanded === f.id && React.createElement("div", { style: { marginTop: 20, paddingTop: 20, borderTop: "2px solid #000" } },
+                  React.createElement("p", { style: { fontSize: 14, lineHeight: 1.8, marginBottom: 16, color: "#333" } }, f.description),
+                  React.createElement("div", { style: { fontSize: 10, fontWeight: 700, color: "#888", textTransform: "uppercase", letterSpacing: "0.2em", marginBottom: 10 } }, "Sectors"),
+                  React.createElement("div", null, f.sectors.map(s => React.createElement(Badge, { key: s }, s)))
+                )
+              )
+            )
+          )
+        )
+      );
+    }
+
+    function StartupsTab() {
+      const [search, setSearch] = useState("");
+      const [sectorFilter, setSectorFilter] = useState("All");
+      const [sortBy, setSortBy] = useState("valuation");
+      const [expanded, setExpanded] = useState(null);
+
+      const filtered = useMemo(() => {
+        let result = STARTUPS.filter(s => {
+          const ms = !search || s.name.toLowerCase().includes(search.toLowerCase()) || s.description.toLowerCase().includes(search.toLowerCase());
+          const mc = sectorFilter === "All" || s.sectors.includes(sectorFilter);
+          return ms && mc;
+        });
+        if (sortBy === "valuation") {
+          result.sort((a, b) => {
+            const p = (v) => { if (!v || v === "N/A (Seed)") return 0; const n = parseFloat(v.replace(/[^0-9.]/g, "")); return v.includes("B") ? n * 1000 : n; };
+            return p(b.valuation) - p(a.valuation);
+          });
+        } else if (sortBy === "name") {
+          result.sort((a, b) => a.name.localeCompare(b.name));
+        } else if (sortBy === "founded") {
+          result.sort((a, b) => b.founded - a.founded);
+        }
+        return result;
+      }, [search, sectorFilter, sortBy]);
+
+      return React.createElement("div", null,
+        React.createElement("div", { style: { display: "flex", gap: 12, marginBottom: 40, flexWrap: "wrap" } },
+          React.createElement("div", { style: { flex: 1, minWidth: 200 } }, React.createElement(SearchBar, { value: search, onChange: setSearch, placeholder: "Search startups..." })),
+          React.createElement(Select, { value: sectorFilter, onChange: setSectorFilter, options: SECTORS }),
+          React.createElement(Select, { value: sortBy, onChange: setSortBy, options: ["valuation", "name", "founded"] })
+        ),
+        React.createElement("div", { style: { fontSize: 10, color: "#999", marginBottom: 16, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.15em" } }, filtered.length + " startup" + (filtered.length !== 1 ? "s" : "")),
+        React.createElement("div", { className: "du-grid-cards", style: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(480px, 1fr))", gap: 0 } },
+          filtered.map(s =>
+            React.createElement("div", {
+              key: s.id,
+              style: {
+                background: "#fff",
+                borderBottom: "1px solid #000",
+                borderRight: "1px solid #000",
+                cursor: "pointer",
+              },
+              onClick: () => setExpanded(expanded === s.id ? null : s.id),
+              onMouseEnter: (e) => e.currentTarget.style.background = "rgba(0,0,0,0.03)",
+              onMouseLeave: (e) => e.currentTarget.style.background = "#fff"
+            },
+              React.createElement("div", { style: { padding: "32px" } },
+                React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 16, marginBottom: 12 } },
+                  React.createElement("a", {
+                    href: s.domain ? "https://" + s.domain : undefined,
+                    target: "_blank", rel: "noopener noreferrer",
+                    onClick: (e) => e.stopPropagation(),
+                    style: { display: "flex", alignItems: "center", gap: 16, flex: 1, textDecoration: "none", color: "inherit" }
+                  },
+                    React.createElement(Logo, { domain: s.domain, name: s.name, size: 36 }),
+                    React.createElement("div", { style: { flex: 1 } },
+                      React.createElement("div", { style: { display: "flex", alignItems: "baseline", gap: 14 } },
+                        React.createElement("span", { style: { fontWeight: 700, fontSize: 18, letterSpacing: "0.01em" } }, s.name),
+                        React.createElement("span", { style: { fontSize: 15, fontWeight: 900, letterSpacing: "-0.02em" } }, s.valuation)
+                      ),
+                      React.createElement("div", { style: { fontSize: 11, color: "#888", marginTop: 4, letterSpacing: "0.08em", textTransform: "uppercase", fontWeight: 600 } }, "Founded ", s.founded, " \u00b7 ", s.hq, " \u00b7 Raised: ", s.totalRaised)
+                    )
+                  )
+                ),
+                React.createElement("div", { style: { marginBottom: 8 } }, s.sectors.map(sec => React.createElement(Badge, { key: sec }, sec))),
+                React.createElement("div", null,
+                  React.createElement("span", { style: { fontSize: 10, color: "#888", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.15em", marginRight: 8 } }, "Investors"),
+                  s.investors.map(inv => React.createElement(BadgeGray, { key: inv }, inv))
+                ),
+                s.primePartners.length > 0 && React.createElement("div", { style: { marginTop: 6 } },
+                  React.createElement("span", { style: { fontSize: 10, color: "#888", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.15em", marginRight: 8 } }, "Primes"),
+                  s.primePartners.map(p => React.createElement(BadgeOutline, { key: p }, p))
+                ),
+                expanded === s.id && React.createElement("div", { style: { marginTop: 20, paddingTop: 20, borderTop: "2px solid #000" } },
+                  React.createElement("p", { style: { fontSize: 14, lineHeight: 1.8, marginBottom: 16, color: "#333" } }, s.description),
+                  React.createElement("div", { className: "du-grid-detail", style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 32 } },
+                    React.createElement("div", null,
+                      React.createElement("div", { style: { fontSize: 10, fontWeight: 700, color: "#888", textTransform: "uppercase", letterSpacing: "0.2em", marginBottom: 8 } }, "Defense / Military Use"),
+                      React.createElement("p", { style: { fontSize: 13, color: "#333", lineHeight: 1.7 } }, s.dualUse)
+                    ),
+                    React.createElement("div", null,
+                      React.createElement("div", { style: { fontSize: 10, fontWeight: 700, color: "#888", textTransform: "uppercase", letterSpacing: "0.2em", marginBottom: 8 } }, "Commercial Use"),
+                      React.createElement("p", { style: { fontSize: 13, color: "#333", lineHeight: 1.7 } }, s.commercialUse)
+                    )
+                  )
+                )
+              )
+            )
+          )
+        )
+      );
+    }
+
+    function FundingTab() {
+      const [sortBy, setSortBy] = useState("amount");
+      const sorted = useMemo(() => {
+        const copy = [...FUNDING_ROUNDS];
+        if (sortBy === "amount") {
+          copy.sort((a, b) => {
+            const p = (s) => { const n = parseFloat(s.replace(/[^0-9.]/g, "")); return s.includes("B") ? n * 1000 : n; };
+            return p(b.amount) - p(a.amount);
+          });
+        } else if (sortBy === "company") {
+          copy.sort((a, b) => a.company.localeCompare(b.company));
+        }
+        return copy;
+      }, [sortBy]);
+
+      return React.createElement("div", null,
+        React.createElement("div", { style: { marginBottom: 24 } },
+          React.createElement(Select, { value: sortBy, onChange: setSortBy, options: ["amount", "company"] })
+        ),
+        React.createElement("div", { style: { background: "#fff", overflow: "hidden" } },
+          React.createElement("table", { style: { width: "100%", borderCollapse: "collapse", fontSize: 14 } },
+            React.createElement("thead", null,
+              React.createElement("tr", { style: { borderBottom: "4px solid #000" } },
+                ["Company", "Round", "Amount", "Lead Investor", "Valuation", "Date"].map(h =>
+                  React.createElement("th", {
+                    key: h,
+                    style: {
+                      textAlign: h === "Amount" || h === "Valuation" ? "right" : "left",
+                      padding: "16px 20px", fontWeight: 700, fontSize: 10,
+                      textTransform: "uppercase", letterSpacing: "0.2em", color: "#000"
+                    }
+                  }, h)
+                )
+              )
+            ),
+            React.createElement("tbody", null,
+              sorted.map((r, i) =>
+                React.createElement("tr", {
+                  key: i,
+                  style: { borderBottom: "1px solid #000" },
+                  onMouseEnter: (e) => e.currentTarget.style.background = "rgba(0,0,0,0.03)",
+                  onMouseLeave: (e) => e.currentTarget.style.background = "transparent"
+                },
+                  React.createElement("td", { style: { padding: "16px 20px", fontWeight: 700, letterSpacing: "0.01em" } }, r.company),
+                  React.createElement("td", { style: { padding: "16px 20px" } }, React.createElement(Badge, null, r.round)),
+                  React.createElement("td", { style: { padding: "16px 20px", textAlign: "right", fontWeight: 900, fontSize: 16, letterSpacing: "-0.02em" } }, r.amount),
+                  React.createElement("td", { style: { padding: "16px 20px", color: "#555" } }, r.leadInvestor),
+                  React.createElement("td", { style: { padding: "16px 20px", textAlign: "right", color: "#555" } }, r.valuation),
+                  React.createElement("td", { style: { padding: "16px 20px", color: "#888", fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", fontWeight: 600 } }, r.date)
+                )
+              )
+            )
+          )
+        )
+      );
+    }
+
+    function PrimesTab() {
+      return React.createElement("div", null,
+        React.createElement("p", { style: { fontSize: 13, color: "#666", marginBottom: 32, letterSpacing: "0.02em" } }, "How traditional defense contractors (primes) and emerging tech companies engage with dual-use startups."),
+        React.createElement("div", { className: "du-grid-cards", style: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(440px, 1fr))", gap: 0 } },
+          DEFENSE_PRIMES.map((p, i) =>
+            React.createElement("div", {
+              key: i,
+              style: {
+                background: "#fff",
+                borderBottom: "1px solid #000",
+                borderRight: "1px solid #000",
+                padding: "32px"
+              }
+            },
+              React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 16, marginBottom: 20 } },
+                React.createElement("a", {
+                  href: p.domain ? "https://" + p.domain : undefined,
+                  target: "_blank", rel: "noopener noreferrer",
+                  style: { display: "flex", alignItems: "center", gap: 16, textDecoration: "none", color: "inherit" }
+                },
+                  React.createElement(Logo, { domain: p.domain, name: p.name, size: 36 }),
+                  React.createElement("div", null,
+                    React.createElement("div", { style: { fontWeight: 700, fontSize: 20, letterSpacing: "-0.01em" } }, p.name),
+                    p.ventureArm && p.ventureArm !== "N/A" && p.ventureArm !== "N/A (Consortium leader)" && React.createElement("div", { style: { fontSize: 11, color: "#888", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", marginTop: 4 } }, "Venture Arm: " + p.ventureArm),
+                    p.ventureArm === "N/A (Consortium leader)" && React.createElement("div", { style: { fontSize: 11, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", marginTop: 4 } }, "Neoprime Consortium Leader")
+                  )
+                )
+              ),
+              React.createElement("p", { style: { fontSize: 14, color: "#333", lineHeight: 1.8, marginBottom: 20 } }, p.relationship),
+              p.startupPartners.length > 0 && React.createElement("div", null,
+                React.createElement("div", { style: { fontSize: 10, fontWeight: 700, color: "#888", textTransform: "uppercase", letterSpacing: "0.2em", marginBottom: 10 } }, "Startup Partners / Portfolio"),
+                React.createElement("div", null, p.startupPartners.map(s => React.createElement(BadgeGray, { key: s }, s)))
+              )
+            )
+          )
+        )
+      );
+    }
+
+    // ── Main App ──────────────────────────────────────────────────────────────
+
+    const TABS = [
+      { id: "overview", label: "Overview" },
+      { id: "funds", label: "VC Funds (" + VC_FUNDS.length + ")" },
+      { id: "startups", label: "Startups (" + STARTUPS.length + ")" },
+      { id: "funding", label: "Funding Rounds" },
+      { id: "primes", label: "Defense Primes" },
+    ];
+
+    function App() {
+      const [activeTab, setActiveTab] = useState("overview");
+
+      return React.createElement("div", { style: { minHeight: "100vh", background: "#fff" } },
+        // Header
+        React.createElement("header", {
+          className: "du-header",
+          style: {
+            background: "#d8d8d8", color: "#000", padding: "48px 64px 44px",
+          }
+        },
+          React.createElement("div", { style: { maxWidth: 1400, margin: "0 auto" } },
+            React.createElement("h1", {
+              className: "du-wordmark",
+              style: {
+                fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
+                fontSize: 96, fontWeight: 900, letterSpacing: "-0.03em", lineHeight: 0.95,
+                color: "#e00000", cursor: "pointer", display: "inline-block"
+              },
+              onClick: () => setActiveTab("overview"),
+              title: "Back to overview"
+            }, "DUAL USE"),
+            React.createElement("p", {
+              style: {
+                fontSize: 22, color: "#666", marginTop: 16,
+                fontWeight: 400, letterSpacing: "0.01em",
+                fontFamily: "'EB Garamond', Georgia, serif",
+                fontStyle: "italic", fontWeight: 500
+              },
+              className: "du-subtitle"
+            }, "Tracking venture capital investment in defense tech")
+          )
+        ),
+        // Nav
+        React.createElement("nav", {
+          style: {
+            background: "#fff", borderBottom: "3px solid #000",
+            position: "sticky", top: 0, zIndex: 99
+          }
+        },
+          React.createElement("div", { className: "du-nav-inner", style: { maxWidth: 1400, margin: "0 auto", display: "flex", gap: 0, overflowX: "auto", padding: "0 64px" } },
+            TABS.map(tab =>
+              React.createElement("button", {
+                key: tab.id,
+                className: "du-tab",
+                onClick: () => setActiveTab(tab.id),
+                style: {
+                  padding: "20px 32px", fontSize: 11, fontWeight: 700,
+                  background: "transparent", border: "none", cursor: "pointer",
+                  borderBottom: activeTab === tab.id ? "4px solid #000" : "4px solid transparent",
+                  color: activeTab === tab.id ? "#000" : "#aaa",
+                  whiteSpace: "nowrap",
+                  fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
+                  textTransform: "uppercase", letterSpacing: "0.2em",
+                  transition: "color 0.15s"
+                }
+              }, tab.label)
+            )
+          )
+        ),
+        // Content
+        React.createElement("main", { className: "du-main", style: { maxWidth: 1400, margin: "0 auto", padding: "64px" } },
+          activeTab === "overview" && React.createElement(OverviewTab),
+          activeTab === "funds" && React.createElement(FundsTab),
+          activeTab === "startups" && React.createElement(StartupsTab),
+          activeTab === "funding" && React.createElement(FundingTab),
+          activeTab === "primes" && React.createElement(PrimesTab),
+        ),
+        // Footer
+        React.createElement("footer", {
+          className: "du-footer",
+          style: { borderTop: "4px solid #000", padding: "48px 64px", marginTop: 80 }
+        },
+          React.createElement("p", { style: { fontSize: 10, color: "#888", maxWidth: 1400, margin: "0 auto", letterSpacing: "0.15em", textTransform: "uppercase", fontWeight: 700 } },
+            "Data compiled from Crunchbase, PitchBook, public filings, and news reports. Last updated March 2026."
+          )
+        )
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(App));
+  </script>
+</body>
+</html>
