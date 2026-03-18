@@ -79,6 +79,7 @@
       .du-grid-detail { grid-template-columns: 1fr !important; gap: 20px !important; }
       .du-grid-news { grid-template-columns: 1fr !important; }
       .du-news-label { letter-spacing: 0.1em !important; font-size: 9px !important; }
+      .du-news-sources { display: none !important; }
     }
   </style>
 </head>
@@ -1654,6 +1655,7 @@
             style: { fontSize: 10, fontWeight: 700, letterSpacing: "0.28em", textTransform: "uppercase", whiteSpace: "nowrap" }
           }, "Defense Tech News"),
           React.createElement("div", {
+            className: "du-news-sources",
             style: { fontSize: 9, fontWeight: 700, letterSpacing: "0.2em", color: "#999", textTransform: "uppercase", textAlign: "right" }
           },
             loading
