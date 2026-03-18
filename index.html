@@ -2187,7 +2187,7 @@
       function tick() {
         const canvas = document.getElementById('du-globe');
         drawGlobe(canvas, angle);
-        angle += 0.003;
+        angle -= 0.003;
         requestAnimationFrame(tick);
       }
       // Wait for React to mount the canvas, then size and start
