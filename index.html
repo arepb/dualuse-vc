@@ -2031,8 +2031,27 @@
       { id: "primes", label: "Defense Primes" },
     ];
 
+    const VALID_TABS = new Set(["overview", "funds", "startups", "funding", "primes"]);
+    function hashToTab(hash) {
+      const id = (hash || "").replace("#", "");
+      return VALID_TABS.has(id) ? id : "overview";
+    }
+
     function App() {
-      const [activeTab, setActiveTab] = useState("overview");
+      const [activeTab, setActiveTab] = useState(() => hashToTab(window.location.hash));
+
+      // Sync hash → tab when user hits back/forward
+      React.useEffect(() => {
+        const onHash = () => setActiveTab(hashToTab(window.location.hash));
+        window.addEventListener("hashchange", onHash);
+        return () => window.removeEventListener("hashchange", onHash);
+      }, []);
+
+      // Wrap setter so every tab change updates the URL
+      function goToTab(id) {
+        window.location.hash = id === "overview" ? "" : id;
+        setActiveTab(id);
+      }
 
       return React.createElement("div", { style: { minHeight: "100vh", background: "#fff" } },
         // Header
@@ -2051,7 +2070,7 @@
                   fontSize: 96, fontWeight: 900, letterSpacing: "-0.03em", lineHeight: 0.95,
                   color: "#e00000", cursor: "pointer", display: "inline-block"
                 },
-                onClick: () => setActiveTab("overview"),
+                onClick: () => goToTab("overview"),
                 title: "Back to overview"
               }, "DUAL USE"),
               React.createElement("p", {
@@ -2084,7 +2103,7 @@
               React.createElement("button", {
                 key: tab.id,
                 className: "du-tab",
-                onClick: () => setActiveTab(tab.id),
+                onClick: () => goToTab(tab.id),
                 style: {
                   padding: "20px 32px", fontSize: 11, fontWeight: 700,
                   background: "transparent", border: "none", cursor: "pointer",
