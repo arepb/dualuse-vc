@@ -1609,9 +1609,11 @@
           }
         };
 
+        const MAX_AGE = 60 * 24 * 60 * 60 * 1000; // 60 days
         Promise.all(RSS_FEEDS.map(fetchFeed)).then(results => {
           const all = results.flat()
             .filter(a => a.title && a.link)
+            .filter(a => !a.date || a.date.getTime() === 0 || (Date.now() - a.date.getTime()) < MAX_AGE)
             .sort((a, b) => b.date - a.date)
             .slice(0, 16);
           if (all.length > 0) {
@@ -1661,27 +1663,8 @@
                 )
           )
         ),
-        (loading || articles.length === 0)
-          ? React.createElement("div", {
-              className: "du-grid-news", style: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 0 }
-            },
-              Array.from({ length: 8 }).map((_, i) =>
-                React.createElement("div", {
-                  key: i,
-                  style: {
-                    padding: "22px 28px 22px 24px",
-                    borderBottom: "1px solid #e0e0e0",
-                    borderRight: "1px solid #e0e0e0",
-                  }
-                },
-                  React.createElement("div", { style: { width: 80, height: 8, background: "#f0f0f0", marginBottom: 12 } }),
-                  React.createElement("div", { style: { width: "90%", height: 12, background: "#f0f0f0", marginBottom: 6 } }),
-                  React.createElement("div", { style: { width: "75%", height: 12, background: "#f0f0f0", marginBottom: 6 } }),
-                  React.createElement("div", { style: { width: "50%", height: 12, background: "#f0f0f0", marginBottom: 16 } }),
-                  React.createElement("div", { style: { width: 48, height: 8, background: "#f4f4f4" } })
-                )
-              )
-            )
+        loading
+          ? null
           : React.createElement("div", {
                 className: "du-grid-news", style: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 0 }
               },
