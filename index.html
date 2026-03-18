@@ -2067,7 +2067,7 @@
             React.createElement("canvas", {
               id: "du-globe",
               width: 140, height: 140,
-              style: { display: "block", flexShrink: 0 },
+              style: { display: "block", flexShrink: 0, alignSelf: "center" },
               className: "du-globe-canvas"
             })
           )
@@ -2123,22 +2123,23 @@
   </script>
 
   <!-- Rotating halftone globe -->
-  <style>
-    @media (max-width: 768px) { .du-globe-canvas { display: none !important; } }
-  </style>
   <script>
     (function() {
       const TILT = 23.5 * Math.PI / 180;
       const cosT = Math.cos(TILT), sinT = Math.sin(TILT);
       const ll = Math.sqrt(0.5*0.5 + 0.55*0.55 + 0.67*0.67);
       const LX = -0.5/ll, LY = -0.55/ll, LZ = 0.67/ll;
-      const LAT = 28, BASE_LON = 54, BASE_DOT = 2.0;
+      const LAT = 28, BASE_LON = 54;
 
       function drawGlobe(canvas, angle) {
         if (!canvas) return;
         const ctx = canvas.getContext('2d');
         const W = canvas.width, H = canvas.height;
-        const cx = W/2, cy = H/2, R = 60;
+        const cx = W/2, cy = H/2;
+        // R and dot size scale with canvas size
+        const R = Math.min(W, H) * 0.43;
+        const BASE_DOT = R * 0.033;
+
         ctx.fillStyle = '#d8d8d8';
         ctx.fillRect(0, 0, W, H);
         ctx.fillStyle = '#000';
@@ -2158,7 +2159,7 @@
             const bright = diff*0.88 + 0.10;
             const edge = Math.pow(Math.max(0, z), 0.35);
             const dr = BASE_DOT * edge * (0.28 + bright*0.72);
-            if (dr > 0.18) dots.push({ z, px: cx+x*R, py: cy-y*R, dr });
+            if (dr > 0.15) dots.push({ z, px: cx+x*R, py: cy-y*R, dr });
           }
         }
         dots.sort((a,b) => a.z - b.z);
@@ -2169,6 +2170,19 @@
         });
       }
 
+      function initGlobe() {
+        const canvas = document.getElementById('du-globe');
+        if (!canvas) return false;
+        // Size canvas appropriately for desktop vs mobile
+        const isMobile = window.innerWidth <= 768;
+        const size = isMobile ? 80 : 140;
+        canvas.width = size;
+        canvas.height = size;
+        canvas.style.width = size + 'px';
+        canvas.style.height = size + 'px';
+        return true;
+      }
+
       let angle = 0;
       function tick() {
         const canvas = document.getElementById('du-globe');
@@ -2176,9 +2190,9 @@
         angle += 0.003;
         requestAnimationFrame(tick);
       }
-      // Wait for React to mount the canvas
+      // Wait for React to mount the canvas, then size and start
       const wait = setInterval(() => {
-        if (document.getElementById('du-globe')) { clearInterval(wait); tick(); }
+        if (initGlobe()) { clearInterval(wait); tick(); }
       }, 100);
     })();
   </script>
