@@ -1,0 +1,28 @@
+# Dual Use
+
+> Tracking venture capital investment in dual-use defense tech startups.
+
+Dual Use (dualuse.vc) is a live tracker of the defense tech startup ecosystem — venture capital funds, startups, funding rounds, and defense prime partnerships. Data is updated weekly.
+
+## Sections
+
+- [Overview](https://dualuse.vc/): Market stats ($49.1B in 2025 defense tech VC funding), live news feed from Defense One, Breaking Defense, Defense News, and C4ISRNET, and a ranked list of the biggest funding rounds.
+- [VC Funds](https://dualuse.vc/): 25 venture capital funds actively investing in defense tech, including Andreessen Horowitz, Founders Fund, In-Q-Tel, Shield Capital, Lux Capital, and Trucks Venture Capital.
+- [Startups](https://dualuse.vc/): 100 dual-use defense tech startups with valuations, total raised, key investors, defense prime partners, and dual-use/commercial application summaries.
+- [Funding Rounds](https://dualuse.vc/): Major funding rounds with amounts, lead investors, valuations, and dates.
+- [Defense Primes](https://dualuse.vc/): 8 defense prime contractors (Lockheed Martin, RTX, Boeing, Northrop Grumman, L3Harris, General Dynamics, BAE Systems, SAIC) and their startup venture arms and partnerships.
+
+## Key facts
+
+- Defense tech VC funding reached $49.1B in 2025, nearly doubling from $27.2B in 2024
+- Nearly 8% of all global VC funding now goes to defense tech
+- 825 startups now classified as dual-use defense tech
+- Sectors covered: Autonomous Systems, AI/ML, Space, Aerospace, Cybersecurity, Maritime, Directed Energy, Advanced Manufacturing, Communications, Energy, Robotics, Biotech
+
+## Notable companies tracked
+
+Anduril Industries ($30.5B), Palantir Technologies (public), Shield AI ($5.6B), SpaceX ($350B+), Applied Intuition, Skydio, Joby Aviation (public), Archer Aviation (public, NYSE: ACHR), Beta Technologies (public, NYSE: BETA), Rocket Lab (public, NASDAQ: RKLB), Scale AI ($29B), Havoc, Saronic, True Anomaly, Firestorm, MACH Industries, JetZero, Skyryse ($1.15B), Auriga Space, and 81 more.
+
+## About
+
+Dual Use is an independent tracker. Data is compiled from Crunchbase, PitchBook, public filings, and news reports. Updated weekly via automated scan.
