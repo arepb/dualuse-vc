@@ -1552,7 +1552,10 @@
         const parseXML = (xmlStr) => {
           if (!xmlStr) return [];
           if (xmlStr.startsWith("data:")) {
-            try { xmlStr = atob(xmlStr.split(",")[1]); } catch(e) { return []; }
+            try {
+              const bytes = Uint8Array.from(atob(xmlStr.split(",")[1]), c => c.charCodeAt(0));
+              xmlStr = new TextDecoder("utf-8").decode(bytes);
+            } catch(e) { return []; }
           }
           const xml = new DOMParser().parseFromString(xmlStr, "text/xml");
           return [...xml.querySelectorAll("item")].slice(0, 6).map(item => {
@@ -1569,7 +1572,8 @@
           try {
             let str = raw;
             if (typeof str === "string" && str.startsWith("data:")) {
-              str = atob(str.split(",")[1]);
+              const bytes = Uint8Array.from(atob(str.split(",")[1]), c => c.charCodeAt(0));
+              str = new TextDecoder("utf-8").decode(bytes);
             }
             const awards = JSON.parse(str);
             const list = Array.isArray(awards) ? awards : (awards.data || awards.awards || []);
