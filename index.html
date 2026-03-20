@@ -80,6 +80,7 @@
       .du-grid-news { grid-template-columns: 1fr !important; }
       .du-news-label { letter-spacing: 0.1em !important; font-size: 9px !important; }
       .du-news-sources { display: none !important; }
+      .du-job-meta { display: none !important; }
     }
     @media (min-width: 769px) and (max-width: 1100px) {
       .du-grid-news { grid-template-columns: repeat(2, 1fr) !important; }
@@ -2030,6 +2031,187 @@
       );
     }
 
+    // ── Jobs Tab ──────────────────────────────────────────────────────────────
+
+    const JOB_SOURCES_GH = [
+      { company: "Applied Intuition",  slug: "appliedintuition",  domain: "appliedintuition.com" },
+      { company: "Helsing",            slug: "helsing",           domain: "helsing.ai" },
+      { company: "Rocket Lab",         slug: "rocketlab",         domain: "rocketlabusa.com" },
+      { company: "Planet Labs",        slug: "planetlabs",        domain: "planet.com" },
+      { company: "Capella Space",      slug: "capellaspace",      domain: "capellaspace.com" },
+      { company: "Rebellion Defense",  slug: "rebelliondefense",  domain: "rebelliondefense.com" },
+      { company: "Scale AI",           slug: "scaleai",           domain: "scale.com" },
+      { company: "Synthetaic",         slug: "synthetaic",        domain: "synthetaic.com" },
+      { company: "Divergent Technologies", slug: "divergent",     domain: "divergent3d.com" },
+      { company: "Slingshot Aerospace",slug: "slingshotaerospace",domain: "slingshot.space" },
+      { company: "Vannevar Labs",      slug: "vannevarlabs",      domain: "vannevarlabs.com" },
+      { company: "Shift5",             slug: "shift5",            domain: "shift5.io" },
+      { company: "Dragos",             slug: "dragos",            domain: "dragos.com" },
+      { company: "Ursa Major",         slug: "ursamajor",         domain: "ursamajor.com" },
+      { company: "Epirus",             slug: "epirus",            domain: "epirusinc.com" },
+      { company: "Skyryse",            slug: "skyryse",           domain: "skyryse.com" },
+      { company: "Spire Global",       slug: "spire",             domain: "spire.com" },
+      { company: "JetZero",            slug: "jetzero",           domain: "jetzero.aero" },
+      { company: "Archer Aviation",    slug: "archer",            domain: "archer.com" },
+      { company: "Relativity Space",   slug: "relativity",        domain: "relativityspace.com" },
+    ];
+
+    const JOB_SOURCES_ASHBY = [
+      { company: "Saronic",            slug: "saronic",           domain: "saronic.com" },
+      { company: "Skydio",             slug: "skydio",            domain: "skydio.com" },
+      { company: "Gecko Robotics",     slug: "gecko-robotics",    domain: "geckorobotics.com" },
+      { company: "Reliable Robotics",  slug: "reliable-robotics", domain: "reliable.aero" },
+      { company: "Primer AI",          slug: "primer",            domain: "primer.ai" },
+    ];
+
+    const PRIME_LINKS = [
+      { company: "Lockheed Martin",  url: "https://www.lockheedmartinjobs.com",       domain: "lockheedmartin.com" },
+      { company: "RTX",              url: "https://careers.rtx.com",                  domain: "rtx.com" },
+      { company: "Boeing",           url: "https://jobs.boeing.com",                  domain: "boeing.com" },
+      { company: "Northrop Grumman", url: "https://www.northropgrumman.com/careers",  domain: "northropgrumman.com" },
+      { company: "BAE Systems",      url: "https://jobs.baesystems.com",              domain: "baesystems.com" },
+      { company: "L3Harris",         url: "https://careers.l3harris.com",             domain: "l3harris.com" },
+      { company: "General Dynamics", url: "https://gdmissionsystems.com/careers",     domain: "gd.com" },
+    ];
+
+    const JOBS_CACHE_KEY = "dualuse_jobs_cache";
+    const JOBS_CACHE_TTL = 4 * 60 * 60 * 1000;
+
+    function categorizeJob(title) {
+      const t = (title || "").toLowerCase();
+      if (/engineer|developer|software|hardware|firmware|systems|architect|scientist|technician|machinist|sre|devops|data|security|cyber|rf |avionics|propulsion|test/.test(t)) return "Engineering";
+      if (/product|design|ux|ui|designer|researcher/.test(t)) return "Product & Design";
+      if (/operations|business|finance|account|legal|hr\b|human resources|recruiter|recruiting|talent|people|admin|marketing|sales|communications|strategy|growth|partnerships|contracts/.test(t)) return "Business & Ops";
+      if (/director|vp\b|vice president|chief|ceo|cto|cfo|head of|president/.test(t)) return "Leadership";
+      return "Other";
+    }
+
+    function JobsTab() {
+      const [jobs, setJobs] = React.useState([]);
+      const [loading, setLoading] = React.useState(true);
+      const [loadedAt, setLoadedAt] = React.useState(null);
+      const [search, setSearch] = React.useState("");
+      const [filterCompany, setFilterCompany] = React.useState("All");
+      const [filterType, setFilterType] = React.useState("All");
+      const [visibleCount, setVisibleCount] = React.useState(50);
+
+      React.useEffect(() => {
+        try {
+          const raw = localStorage.getItem(JOBS_CACHE_KEY);
+          if (raw) {
+            const { jobs: cached, ts } = JSON.parse(raw);
+            if (cached?.length && Date.now() - ts < JOBS_CACHE_TTL) {
+              setJobs(cached); setLoadedAt(new Date(ts)); setLoading(false); return;
+            }
+          }
+        } catch(e) {}
+
+        async function fetchAll() {
+          const ghFetches = JOB_SOURCES_GH.map(async src => {
+            try {
+              const ctrl = new AbortController();
+              const t = setTimeout(() => ctrl.abort(), 8000);
+              const r = await fetch(`https://boards-api.greenhouse.io/v1/boards/${src.slug}/jobs`, { signal: ctrl.signal });
+              clearTimeout(t);
+              const data = await r.json();
+              return (data.jobs || []).map(j => ({ company: src.company, domain: src.domain, title: j.title, url: j.absolute_url, location: j.location?.name || "—", type: categorizeJob(j.title) }));
+            } catch(e) { return []; }
+          });
+          const ashbyFetches = JOB_SOURCES_ASHBY.map(async src => {
+            try {
+              const ctrl = new AbortController();
+              const t = setTimeout(() => ctrl.abort(), 8000);
+              const r = await fetch(`https://api.ashbyhq.com/posting-api/job-board/${src.slug}`, { signal: ctrl.signal });
+              clearTimeout(t);
+              const data = await r.json();
+              return (data.jobPostings || []).map(j => ({ company: src.company, domain: src.domain, title: j.title, url: j.jobUrl, location: j.isRemote ? "Remote" : (j.locationName || "—"), type: categorizeJob(j.title) }));
+            } catch(e) { return []; }
+          });
+          const results = await Promise.allSettled([...ghFetches, ...ashbyFetches]);
+          const all = results.flatMap(r => r.status === "fulfilled" ? r.value : []).filter(j => j.title && j.url);
+          const sorted = all.sort((a, b) => a.company.localeCompare(b.company));
+          setJobs(sorted); setLoadedAt(new Date()); setLoading(false);
+          try { localStorage.setItem(JOBS_CACHE_KEY, JSON.stringify({ jobs: sorted, ts: Date.now() })); } catch(e) {}
+        }
+        fetchAll();
+      }, []);
+
+      const companies = ["All", ...Array.from(new Set(jobs.map(j => j.company))).sort()];
+      const types = ["All", "Engineering", "Product & Design", "Business & Ops", "Leadership", "Other"];
+      const filtered = jobs.filter(j => {
+        if (filterCompany !== "All" && j.company !== filterCompany) return false;
+        if (filterType !== "All" && j.type !== filterType) return false;
+        if (search) { const q = search.toLowerCase(); if (!j.title.toLowerCase().includes(q) && !j.company.toLowerCase().includes(q) && !j.location.toLowerCase().includes(q)) return false; }
+        return true;
+      });
+      const visible = filtered.slice(0, visibleCount);
+      const inputStyle = { padding: "8px 14px", border: "1px solid #000", fontSize: 13, fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", outline: "none", background: "white" };
+      const selectStyle = { ...inputStyle, fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", cursor: "pointer" };
+
+      return React.createElement("div", null,
+        React.createElement("div", { style: { marginBottom: 40 } },
+          React.createElement("h3", { style: { fontSize: 32, fontWeight: 900, letterSpacing: "-0.02em", marginBottom: 12 } }, "Jobs"),
+          React.createElement("div", { style: { width: 48, height: 4, background: "#000", marginBottom: 20 } }),
+          loading
+            ? React.createElement("p", { style: { fontSize: 13, color: "#999" } }, "Loading jobs from " + (JOB_SOURCES_GH.length + JOB_SOURCES_ASHBY.length) + " companies…")
+            : React.createElement("p", { style: { fontSize: 13, color: "#999" } },
+                filtered.length + " open roles · " + (companies.length - 1) + " companies",
+                loadedAt && React.createElement("span", { style: { marginLeft: 12, color: "#ccc" } }, "cached " + loadedAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }))
+              )
+        ),
+        React.createElement("div", { style: { display: "flex", gap: 10, marginBottom: 32, flexWrap: "wrap" } },
+          React.createElement("input", { type: "text", value: search, placeholder: "Search roles, companies, locations…", onChange: e => { setSearch(e.target.value); setVisibleCount(50); }, style: { ...inputStyle, flex: "1 1 240px", minWidth: 180 } }),
+          React.createElement("select", { value: filterCompany, onChange: e => { setFilterCompany(e.target.value); setVisibleCount(50); }, style: selectStyle },
+            companies.map(c => React.createElement("option", { key: c, value: c }, c))),
+          React.createElement("select", { value: filterType, onChange: e => { setFilterType(e.target.value); setVisibleCount(50); }, style: selectStyle },
+            types.map(t => React.createElement("option", { key: t, value: t }, t)))
+        ),
+        loading
+          ? React.createElement("div", { style: { color: "#bbb", fontSize: 13, padding: "40px 0", borderTop: "1px solid #000" } }, "Fetching open roles…")
+          : filtered.length === 0
+            ? React.createElement("div", { style: { color: "#999", fontSize: 13, padding: "40px 0", borderTop: "1px solid #000" } }, "No roles match your filters.")
+            : React.createElement(React.Fragment, null,
+                React.createElement("div", { style: { borderTop: "1px solid #000" } },
+                  visible.map((job, i) =>
+                    React.createElement("a", { key: i, href: job.url, target: "_blank", rel: "noopener noreferrer",
+                      style: { display: "flex", alignItems: "center", gap: 14, padding: "14px 0", borderBottom: "1px solid #e8e8e8", textDecoration: "none", color: "inherit" }
+                    },
+                      React.createElement("img", { src: `https://www.google.com/s2/favicons?domain=${job.domain}&sz=32`, style: { width: 20, height: 20, flexShrink: 0 }, onError: e => { e.target.style.display = "none"; } }),
+                      React.createElement("div", { style: { flex: 1, minWidth: 0 } },
+                        React.createElement("div", { style: { fontSize: 15, fontWeight: 700, letterSpacing: "-0.01em", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } }, job.title),
+                        React.createElement("div", { style: { fontSize: 11, color: "#888", fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", marginTop: 2 } }, job.company)
+                      ),
+                      React.createElement("div", { className: "du-job-meta", style: { display: "flex", alignItems: "center", gap: 20, flexShrink: 0 } },
+                        React.createElement("span", { style: { fontSize: 10, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", color: "#aaa" } }, job.type),
+                        React.createElement("span", { style: { fontSize: 12, color: "#bbb", minWidth: 120, textAlign: "right" } }, job.location),
+                        React.createElement("span", { style: { fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#e00000", whiteSpace: "nowrap" } }, "Apply →")
+                      )
+                    )
+                  )
+                ),
+                filtered.length > visibleCount && React.createElement("button", {
+                  onClick: () => setVisibleCount(v => v + 50),
+                  style: { marginTop: 24, padding: "10px 24px", border: "1px solid #000", background: "white", fontSize: 11, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", cursor: "pointer", fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif" }
+                }, "Show more (" + (filtered.length - visibleCount) + " remaining)")
+              ),
+        React.createElement("div", { style: { marginTop: 64, paddingTop: 40, borderTop: "3px solid #000" } },
+          React.createElement("h3", { style: { fontSize: 20, fontWeight: 900, letterSpacing: "-0.01em", marginBottom: 6 } }, "Defense Primes"),
+          React.createElement("p", { style: { fontSize: 13, color: "#888", marginBottom: 24 } }, "Primes use enterprise ATS — browse their careers pages directly."),
+          React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 10 } },
+            PRIME_LINKS.map(p =>
+              React.createElement("a", { key: p.company, href: p.url, target: "_blank", rel: "noopener noreferrer",
+                style: { display: "flex", alignItems: "center", gap: 10, padding: "14px 16px", border: "1px solid #000", textDecoration: "none", color: "inherit" }
+              },
+                React.createElement("img", { src: `https://www.google.com/s2/favicons?domain=${p.domain}&sz=32`, style: { width: 18, height: 18 } }),
+                React.createElement("span", { style: { fontSize: 13, fontWeight: 700 } }, p.company),
+                React.createElement("span", { style: { marginLeft: "auto", fontSize: 11, color: "#e00000", fontWeight: 700, letterSpacing: "0.1em" } }, "Careers →")
+              )
+            )
+          )
+        )
+      );
+    }
+
     // ── Main App ──────────────────────────────────────────────────────────────
 
     const TABS = [
@@ -2037,10 +2219,11 @@
       { id: "funds", label: "VC Funds (" + VC_FUNDS.length + ")" },
       { id: "startups", label: "Startups (" + STARTUPS.length + ")" },
       { id: "funding", label: "Funding Rounds" },
+      { id: "jobs", label: "Jobs" },
       { id: "primes", label: "Defense Primes" },
     ];
 
-    const VALID_TABS = new Set(["overview", "funds", "startups", "funding", "primes"]);
+    const VALID_TABS = new Set(["overview", "funds", "startups", "funding", "jobs", "primes"]);
     function hashToTab(hash) {
       const id = (hash || "").replace("#", "");
       return VALID_TABS.has(id) ? id : "overview";
@@ -2134,6 +2317,7 @@
           activeTab === "funds" && React.createElement(FundsTab),
           activeTab === "startups" && React.createElement(StartupsTab),
           activeTab === "funding" && React.createElement(FundingTab),
+          activeTab === "jobs" && React.createElement(JobsTab),
           activeTab === "primes" && React.createElement(PrimesTab),
         ),
         // Footer
