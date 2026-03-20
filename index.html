@@ -81,6 +81,9 @@
       .du-news-label { letter-spacing: 0.1em !important; font-size: 9px !important; }
       .du-news-sources { display: none !important; }
     }
+    @media (min-width: 769px) and (max-width: 1100px) {
+      .du-grid-news { grid-template-columns: repeat(2, 1fr) !important; }
+    }
   </style>
 </head>
 <body>
@@ -1616,11 +1619,17 @@
 
         const MAX_AGE = 60 * 24 * 60 * 60 * 1000; // 60 days
         Promise.all(RSS_FEEDS.map(fetchFeed)).then(results => {
-          const all = results.flat()
+          let all = results.flat()
             .filter(a => a.title && a.link)
             .filter(a => !a.date || a.date.getTime() === 0 || (Date.now() - a.date.getTime()) < MAX_AGE)
             .sort((a, b) => b.date - a.date)
             .slice(0, 16);
+          // Trim to nearest multiple of 4 so the grid never has an incomplete last row.
+          // (Grid is fixed at 4 cols desktop / 2 cols tablet / 1 col mobile.)
+          const colCount = 4;
+          if (all.length >= colCount) {
+            all = all.slice(0, Math.floor(all.length / colCount) * colCount);
+          }
           if (all.length > 0) {
             const now = Date.now();
             try {
@@ -1672,7 +1681,7 @@
         loading
           ? null
           : React.createElement("div", {
-                className: "du-grid-news", style: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 0 }
+                className: "du-grid-news", style: { display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 0 }
               },
                 articles.map((a, i) =>
                   React.createElement("a", {
