@@ -2129,7 +2129,15 @@
           });
           const results = await Promise.allSettled([...ghFetches, ...ashbyFetches]);
           const all = results.flatMap(r => r.status === "fulfilled" ? r.value : []).filter(j => j.title && j.url);
-          const sorted = all.sort((a, b) => a.company.localeCompare(b.company));
+          // Round-robin interleave: one job per company per pass — avoids single-company domination
+          const byCompany = {};
+          all.forEach(j => { if (!byCompany[j.company]) byCompany[j.company] = []; byCompany[j.company].push(j); });
+          const groups = Object.values(byCompany);
+          const interleaved = [];
+          while (groups.some(g => g.length > 0)) {
+            groups.forEach(g => { if (g.length > 0) interleaved.push(g.shift()); });
+          }
+          const sorted = interleaved;
           setJobs(sorted); setLoadedAt(new Date()); setLoading(false);
           try { localStorage.setItem(JOBS_CACHE_KEY, JSON.stringify({ jobs: sorted, ts: Date.now() })); } catch(e) {}
         }
