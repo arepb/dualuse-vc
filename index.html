@@ -78,7 +78,7 @@
       .du-grid-2col { grid-template-columns: 1fr !important; gap: 40px !important; }
       .du-grid-detail { grid-template-columns: 1fr !important; gap: 20px !important; }
       .du-grid-news { grid-template-columns: 1fr !important; }
-      .du-news-label { letter-spacing: 0.1em !important; font-size: 9px !important; }
+      .du-news-label { font-size: 22px !important; letter-spacing: -0.02em !important; }
       .du-news-sources { display: none !important; }
       .du-job-meta { display: none !important; }
     }
@@ -1653,17 +1653,17 @@
         return d.toLocaleDateString("en-US", { month: "short", day: "numeric" }).toUpperCase();
       };
 
-      return React.createElement("div", { style: { marginBottom: 72, borderTop: "4px solid #000" } },
+      return React.createElement("div", { style: { marginBottom: 72 } },
         React.createElement("div", {
           style: {
-            display: "flex", alignItems: "center", justifyContent: "space-between",
-            padding: "18px 24px 20px", borderBottom: "1px solid #e0e0e0", marginBottom: 0
+            display: "flex", alignItems: "baseline", justifyContent: "space-between",
+            paddingBottom: 16, borderBottom: "4px solid #000", marginBottom: 0
           }
         },
-          React.createElement("div", {
+          React.createElement("h3", {
             className: "du-news-label",
-            style: { fontSize: 10, fontWeight: 700, letterSpacing: "0.28em", textTransform: "uppercase", whiteSpace: "nowrap" }
-          }, "Defense Tech News"),
+            style: { fontSize: 32, fontWeight: 900, letterSpacing: "-0.02em", margin: 0 }
+          }, "Signals"),
           React.createElement("div", {
             className: "du-news-sources",
             style: { fontSize: 9, fontWeight: 700, letterSpacing: "0.2em", color: "#999", textTransform: "uppercase", textAlign: "right" }
