@@ -1529,7 +1529,7 @@
     const CACHE_KEY = "dualuse_news_cache";
     const CACHE_TTL = 15 * 60 * 1000; // 15 minutes
 
-    function NewsSection() {
+    function NewsSection({ compact }) {
       const [articles, setArticles] = React.useState([]);
       const [loading, setLoading] = React.useState(true);
       const [cachedAt, setCachedAt] = React.useState(null);
@@ -1653,7 +1653,7 @@
         return d.toLocaleDateString("en-US", { month: "short", day: "numeric" }).toUpperCase();
       };
 
-      return React.createElement("div", { style: { marginBottom: 72 } },
+      return React.createElement("div", { style: compact ? {} : { marginBottom: 72 } },
         React.createElement("div", {
           style: {
             display: "flex", alignItems: "baseline", justifyContent: "space-between",
@@ -1682,7 +1682,7 @@
         loading
           ? null
           : React.createElement("div", {
-                className: "du-grid-news", style: { display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 0 }
+                className: "du-grid-news", style: { display: "grid", gridTemplateColumns: compact ? "1fr" : "repeat(4, 1fr)", gap: 0 }
               },
                 articles.map((a, i) =>
                   React.createElement("a", {
@@ -1760,7 +1760,7 @@
       }, []);
 
       if (!jobs.length) return null;
-      return React.createElement("div", { style: { marginBottom: 48 } },
+      return React.createElement("div", null,
         React.createElement("div", { style: { display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 20, paddingBottom: 16, borderBottom: "4px solid #000" } },
           React.createElement("h3", { style: { fontSize: 32, fontWeight: 900, letterSpacing: "-0.02em" } }, "Open Roles"),
           total > 0 && React.createElement("a", { href: "#jobs", onClick: e => { e.preventDefault(); goToTab("jobs"); },
@@ -1790,8 +1790,10 @@
 
     function OverviewTab({ goToTab }) {
       return React.createElement("div", null,
-        React.createElement(FeaturedJobs, { goToTab }),
-        React.createElement(NewsSection),
+        React.createElement("div", { className: "du-grid-2col", style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 64, marginBottom: 72, alignItems: "start" } },
+          React.createElement(FeaturedJobs, { goToTab }),
+          React.createElement(NewsSection, { compact: true })
+        ),
         React.createElement("div", { style: { marginBottom: 64 } },
           React.createElement("h3", { style: { fontSize: 32, fontWeight: 900, letterSpacing: "-0.02em", marginBottom: 32, paddingBottom: 20, borderBottom: "4px solid #000" } }, "Biggest Rounds"),
           React.createElement("div", null,
