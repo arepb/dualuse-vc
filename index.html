@@ -1671,11 +1671,8 @@
             loading
               ? "LOADING..."
               : React.createElement(React.Fragment, null,
-                  RSS_FEEDS.map(f => f.name).join("  ·  "),
-                  refreshing && React.createElement("span", { style: { color: "#e00000", marginLeft: 12 } }, "↻ UPDATING"),
-                  cachedAt && !refreshing && React.createElement("span", { style: { display: "block", marginTop: 3, fontSize: 8, color: "#ccc" } },
-                    "UPDATED " + fmt(cachedAt)
-                  )
+                  refreshing && React.createElement("span", { style: { color: "#e00000" } }, "↻ UPDATING"),
+                  cachedAt && !refreshing && React.createElement("span", null, "UPDATED " + fmt(cachedAt))
                 )
           )
         ),
