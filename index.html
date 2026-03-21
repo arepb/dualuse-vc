@@ -1669,6 +1669,7 @@
         React.createElement("div", {
           style: {
             display: "flex", alignItems: "baseline", justifyContent: "space-between",
+            flexWrap: "wrap", gap: "8px 16px",
             paddingBottom: 16, borderBottom: "4px solid #000", marginBottom: 0
           }
         },
@@ -1770,10 +1771,10 @@
 
       if (!jobs.length) return null;
       return React.createElement("div", null,
-        React.createElement("div", { style: { display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 20, paddingBottom: 16, borderBottom: "4px solid #000" } },
-          React.createElement("h3", { style: { fontSize: 32, fontWeight: 900, letterSpacing: "-0.02em" } }, "Open Roles"),
+        React.createElement("div", { style: { display: "flex", alignItems: "baseline", justifyContent: "space-between", flexWrap: "wrap", gap: "8px 16px", marginBottom: 20, paddingBottom: 16, borderBottom: "4px solid #000" } },
+          React.createElement("h3", { style: { fontSize: 32, fontWeight: 900, letterSpacing: "-0.02em", margin: 0 } }, "Open Roles"),
           total > 0 && React.createElement("a", { href: "#jobs", onClick: e => { e.preventDefault(); goToTab("jobs"); },
-            style: { fontSize: 11, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", color: "#e00000", textDecoration: "none" }
+            style: { fontSize: 11, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", color: "#e00000", textDecoration: "none", whiteSpace: "nowrap", flexShrink: 0 }
           }, "View all " + total + " roles →")
         ),
         React.createElement("div", null,
