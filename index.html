@@ -2225,8 +2225,7 @@
 
       return React.createElement("div", null,
         React.createElement("div", { style: { marginBottom: 40 } },
-          React.createElement("h3", { style: { fontSize: 32, fontWeight: 900, letterSpacing: "-0.02em", marginBottom: 12 } }, "Jobs"),
-          React.createElement("div", { style: { width: 48, height: 4, background: "#000", marginBottom: 20 } }),
+          React.createElement("h3", { style: { fontSize: 32, fontWeight: 900, letterSpacing: "-0.02em", paddingBottom: 16, borderBottom: "4px solid #000", marginBottom: 20 } }, "Jobs"),
           loading
             ? React.createElement("p", { style: { fontSize: 13, color: "#999" } }, "Loading jobs from " + (JOB_SOURCES_GH.length + JOB_SOURCES_ASHBY.length) + " companies…")
             : React.createElement("p", { style: { fontSize: 13, color: "#999" } },
