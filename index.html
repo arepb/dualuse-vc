@@ -2349,10 +2349,19 @@
         React.createElement("p", { style: p },
           "For inquiries, data corrections, or to suggest a company or fund for inclusion, reach out directly."
         ),
-        React.createElement("a", {
-          href: "mailto:covington@dualuse.vc",
-          style: { display: "inline-block", fontSize: 18, fontWeight: 700, letterSpacing: "-0.01em", color: "#e00000", textDecoration: "none", borderBottom: "2px solid #e00000", paddingBottom: 2 }
-        }, "covington@dualuse.vc"),
+        React.createElement(function ObfuscatedEmail() {
+          const [href, setHref] = React.useState("#");
+          const [label, setLabel] = React.useState("");
+          React.useEffect(() => {
+            const u = "covington"; const d = "dualuse.vc";
+            setHref("mailto:" + u + "@" + d);
+            setLabel(u + "@" + d);
+          }, []);
+          return React.createElement("a", {
+            href,
+            style: { display: "inline-block", fontSize: 18, fontWeight: 700, letterSpacing: "-0.01em", color: "#e00000", textDecoration: "none", borderBottom: "2px solid #e00000", paddingBottom: 2 }
+          }, label);
+        }),
       );
     }
 
