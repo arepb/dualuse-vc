@@ -2294,6 +2294,59 @@
       );
     }
 
+    // ── About Tab ─────────────────────────────────────────────────────────────
+
+    function AboutTab() {
+      const h3 = { fontSize: 32, fontWeight: 900, letterSpacing: "-0.02em", paddingBottom: 16, borderBottom: "4px solid #000", marginBottom: 32, marginTop: 56 };
+      const p = { fontSize: 15, lineHeight: 1.8, color: "#222", maxWidth: 720, marginBottom: 20 };
+      const label = { fontSize: 11, fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase", color: "#e00000", marginBottom: 6 };
+      const item = { marginBottom: 28 };
+      return React.createElement("div", { style: { maxWidth: 860 } },
+        React.createElement("h2", { style: { fontSize: 48, fontWeight: 900, letterSpacing: "-0.03em", marginBottom: 8 } }, "About"),
+        React.createElement("p", { style: { ...p, fontSize: 18, color: "#555", marginBottom: 0 } },
+          "Tracking venture capital investment in defense tech."
+        ),
+
+        React.createElement("h3", { style: h3 }, "What is Dual Use?"),
+        React.createElement("p", { style: p },
+          "Dual Use is an independent tracker monitoring venture capital activity at the intersection of defense technology and commercial innovation. The site maps the growing ecosystem of startups, investors, and defense primes reshaping how defense capabilities are built and funded."
+        ),
+        React.createElement("p", { style: p },
+          "As geopolitical competition has accelerated government demand for commercial technology — and as investors have recognized defense as a durable, mission-critical market — dual-use companies have become one of the most consequential categories in venture capital. This site exists to make that activity legible in one place."
+        ),
+
+        React.createElement("h3", { style: h3 }, "What We Track"),
+        React.createElement("div", null,
+          [
+            ["VC Funds", "25 active venture funds with meaningful defense tech portfolios, from generalist firms with increasing defense allocation to dedicated national security investors."],
+            ["Startups", "100 venture-backed companies developing technology with both commercial and defense applications — spanning autonomous systems, space, cybersecurity, propulsion, maritime, and advanced manufacturing."],
+            ["Funding Rounds", "The largest disclosed financing events in the sector, tracked and updated on a regular cadence."],
+            ["Open Roles", "Live job listings pulled directly from company applicant tracking systems across the ecosystem."],
+            ["Defense Primes", "How the traditional defense industrial base is partnering with and investing alongside the new generation of dual-use companies."],
+            ["Signals", "A live news feed aggregating coverage from leading defense and national security publications including Defense One, Breaking Defense, C4ISRNET, The War Zone, and others."],
+          ].map(([name, desc]) =>
+            React.createElement("div", { key: name, style: item },
+              React.createElement("div", { style: label }, name),
+              React.createElement("p", { style: { ...p, marginBottom: 0 } }, desc)
+            )
+          )
+        ),
+
+        React.createElement("h3", { style: h3 }, "Why Dual Use Matters"),
+        React.createElement("p", { style: p },
+          "The line between commercial and defense technology has never been thinner. Satellites built for broadband now serve as battlefield communications networks. Autonomous vehicles designed for consumer markets are deployed in contested environments. Software written for enterprise is powering command and control systems."
+        ),
+        React.createElement("p", { style: p },
+          "Dual Use tracks the capital shaping this convergence — and the companies building technology for both worlds."
+        ),
+
+        React.createElement("h3", { style: h3 }, "Data & Methodology"),
+        React.createElement("p", { style: p },
+          "Data is compiled from public filings, press releases, SEC disclosures, and news reports. Funding figures represent disclosed rounds only. Valuations are at time of last known financing event. Job listings are sourced directly from company hiring systems and refresh every four hours. News updates every 15 minutes via RSS."
+        ),
+      );
+    }
+
     // ── Main App ──────────────────────────────────────────────────────────────
 
     const TABS = [
@@ -2305,7 +2358,7 @@
       { id: "primes", label: "Defense Primes" },
     ];
 
-    const VALID_TABS = new Set(["overview", "funds", "startups", "funding", "jobs", "primes"]);
+    const VALID_TABS = new Set(["overview", "funds", "startups", "funding", "jobs", "primes", "about"]);
     function hashToTab(hash) {
       const id = (hash || "").replace("#", "");
       return VALID_TABS.has(id) ? id : "overview";
@@ -2401,14 +2454,27 @@
           activeTab === "funding" && React.createElement(FundingTab),
           activeTab === "jobs" && React.createElement(JobsTab),
           activeTab === "primes" && React.createElement(PrimesTab),
+          activeTab === "about" && React.createElement(AboutTab),
         ),
         // Footer
         React.createElement("footer", {
           className: "du-footer",
           style: { borderTop: "4px solid #000", padding: "48px 64px", marginTop: 80 }
         },
-          React.createElement("p", { style: { fontSize: 10, color: "#888", maxWidth: 1400, margin: "0 auto", letterSpacing: "0.15em", textTransform: "uppercase", fontWeight: 700 } },
-            "Data compiled from Crunchbase, PitchBook, public filings, and news reports. Last updated March 2026."
+          React.createElement("div", { style: { maxWidth: 1400, margin: "0 auto", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16 } },
+            React.createElement("p", { style: { fontSize: 10, color: "#888", letterSpacing: "0.15em", textTransform: "uppercase", fontWeight: 700, margin: 0 } },
+              "Data compiled from public filings, press releases, and news reports. Last updated March 2026."
+            ),
+            React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 24 } },
+              React.createElement("a", {
+                href: "#about",
+                onClick: e => { e.preventDefault(); goToTab("about"); window.location.hash = "about"; },
+                style: { fontSize: 10, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", color: "#888", textDecoration: "none" }
+              }, "About"),
+              React.createElement("span", { style: { fontSize: 10, color: "#bbb", letterSpacing: "0.1em", textTransform: "uppercase", fontWeight: 700 } },
+                "© " + new Date().getFullYear() + " DualUse.vc"
+              )
+            )
           )
         )
       );
