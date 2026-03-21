@@ -1526,7 +1526,7 @@
       { name: "SBIR / STTR",     url: "https://api.sbir.gov/public/api/awards?rows=8&start=0&sortField=awardDate&sortDir=DESC&agency=DOD", type: "json" },
     ];
 
-    const CACHE_KEY = "dualuse_news_cache";
+    const CACHE_KEY = "dualuse_news_cache_v2";
     const CACHE_TTL = 15 * 60 * 1000; // 15 minutes
 
     function NewsSection({ compact }) {
@@ -1620,13 +1620,21 @@
 
         const MAX_AGE = 60 * 24 * 60 * 60 * 1000; // 60 days
         Promise.all(RSS_FEEDS.map(fetchFeed)).then(results => {
-          let all = results.flat()
+          // Group by source, sorted newest-first within each source
+          const bySource = {};
+          results.flat()
             .filter(a => a.title && a.link)
             .filter(a => !a.date || a.date.getTime() === 0 || (Date.now() - a.date.getTime()) < MAX_AGE)
             .sort((a, b) => b.date - a.date)
-            .slice(0, 16);
+            .forEach(a => { (bySource[a.source] = bySource[a.source] || []).push(a); });
+          // Round-robin interleave across sources
+          const queues = Object.values(bySource);
+          const interleaved = [];
+          while (queues.some(q => q.length)) {
+            queues.forEach(q => { if (q.length) interleaved.push(q.shift()); });
+          }
+          let all = interleaved.slice(0, 16);
           // Trim to nearest multiple of 4 so the grid never has an incomplete last row.
-          // (Grid is fixed at 4 cols desktop / 2 cols tablet / 1 col mobile.)
           const colCount = 4;
           if (all.length >= colCount) {
             all = all.slice(0, Math.floor(all.length / colCount) * colCount);
