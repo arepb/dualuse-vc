@@ -1526,7 +1526,7 @@
       { name: "SBIR / STTR",     url: "https://api.sbir.gov/public/api/awards?rows=8&start=0&sortField=awardDate&sortDir=DESC&agency=DOD", type: "json" },
     ];
 
-    const CACHE_KEY = "dualuse_news_cache_v4";
+    const CACHE_KEY = "dualuse_news_cache_v5";
     const CACHE_TTL = 15 * 60 * 1000; // 15 minutes
 
     function NewsSection({ compact }) {
@@ -1598,40 +1598,36 @@
           } catch(e) { return []; }
         };
 
-        const tryProxy = async (url, parseRes, signal) => {
+        const tryProxy = async (url, parseRes, timeoutMs) => {
+          const controller = new AbortController();
+          const timer = setTimeout(() => controller.abort(), timeoutMs);
           try {
-            const res = await fetch(url, { signal });
+            const res = await fetch(url, { signal: controller.signal });
+            clearTimeout(timer);
             if (!res.ok) return null;
             return await parseRes(res);
-          } catch(e) { return null; }
+          } catch(e) { clearTimeout(timer); return null; }
         };
 
         const fetchFeed = async (feed) => {
-          const controller = new AbortController();
-          const timer = setTimeout(() => controller.abort(), 10000);
-          try {
-            // Primary: allorigins.win (returns JSON with contents field)
-            let raw = await tryProxy(
-              "https://api.allorigins.win/get?url=" + encodeURIComponent(feed.url),
-              async (res) => { const j = await res.json(); return j.contents || null; },
-              controller.signal
+          const enc = encodeURIComponent(feed.url);
+          // Primary: allorigins.win (8s timeout)
+          let raw = await tryProxy(
+            "https://api.allorigins.win/get?url=" + enc,
+            async (res) => { const j = await res.json(); return j.contents || null; },
+            8000
+          );
+          // Fallback: corsproxy.io (8s independent timeout)
+          if (!raw) {
+            raw = await tryProxy(
+              "https://corsproxy.io/?url=" + enc,
+              async (res) => res.text(),
+              8000
             );
-            // Fallback: corsproxy.io (returns raw text directly)
-            if (!raw) {
-              raw = await tryProxy(
-                "https://corsproxy.io/?url=" + encodeURIComponent(feed.url),
-                async (res) => res.text(),
-                controller.signal
-              );
-            }
-            clearTimeout(timer);
-            if (!raw) return [];
-            const articles = feed.type === "json" ? parseSBIR(raw) : parseXML(raw);
-            return articles.map(a => ({ ...a, source: feed.name }));
-          } catch (e) {
-            clearTimeout(timer);
-            return [];
           }
+          if (!raw) return [];
+          const articles = feed.type === "json" ? parseSBIR(raw) : parseXML(raw);
+          return articles.map(a => ({ ...a, source: feed.name }));
         };
 
         const MAX_AGE = 60 * 24 * 60 * 60 * 1000; // 60 days
