@@ -1611,20 +1611,11 @@
 
         const fetchFeed = async (feed) => {
           const enc = encodeURIComponent(feed.url);
-          // Primary: allorigins.win (8s timeout)
-          let raw = await tryProxy(
-            "https://api.allorigins.win/get?url=" + enc,
-            async (res) => { const j = await res.json(); return j.contents || null; },
+          const raw = await tryProxy(
+            "https://api.codetabs.com/v1/proxy/?quest=" + enc,
+            async (res) => res.text(),
             8000
           );
-          // Fallback: codetabs proxy (8s independent timeout, returns raw content)
-          if (!raw) {
-            raw = await tryProxy(
-              "https://api.codetabs.com/v1/proxy/?quest=" + enc,
-              async (res) => res.text(),
-              8000
-            );
-          }
           if (!raw) return [];
           const articles = feed.type === "json" ? parseSBIR(raw) : parseXML(raw);
           return articles.map(a => ({ ...a, source: feed.name }));
