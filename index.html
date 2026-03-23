@@ -1526,7 +1526,7 @@
       { name: "SBIR / STTR",     url: "https://api.sbir.gov/public/api/awards?rows=8&start=0&sortField=awardDate&sortDir=DESC&agency=DOD", type: "json" },
     ];
 
-    const CACHE_KEY = "dualuse_news_cache_v3";
+    const CACHE_KEY = "dualuse_news_cache_v4";
     const CACHE_TTL = 15 * 60 * 1000; // 15 minutes
 
     function NewsSection({ compact }) {
@@ -1598,19 +1598,35 @@
           } catch(e) { return []; }
         };
 
+        const tryProxy = async (url, parseRes, signal) => {
+          try {
+            const res = await fetch(url, { signal });
+            if (!res.ok) return null;
+            return await parseRes(res);
+          } catch(e) { return null; }
+        };
+
         const fetchFeed = async (feed) => {
           const controller = new AbortController();
-          const timer = setTimeout(() => controller.abort(), 8000);
+          const timer = setTimeout(() => controller.abort(), 10000);
           try {
-            const res = await fetch(
+            // Primary: allorigins.win (returns JSON with contents field)
+            let raw = await tryProxy(
               "https://api.allorigins.win/get?url=" + encodeURIComponent(feed.url),
-              { signal: controller.signal }
+              async (res) => { const j = await res.json(); return j.contents || null; },
+              controller.signal
             );
+            // Fallback: corsproxy.io (returns raw text directly)
+            if (!raw) {
+              raw = await tryProxy(
+                "https://corsproxy.io/?url=" + encodeURIComponent(feed.url),
+                async (res) => res.text(),
+                controller.signal
+              );
+            }
             clearTimeout(timer);
-            const data = await res.json();
-            const articles = feed.type === "json"
-              ? parseSBIR(data.contents)
-              : parseXML(data.contents);
+            if (!raw) return [];
+            const articles = feed.type === "json" ? parseSBIR(raw) : parseXML(raw);
             return articles.map(a => ({ ...a, source: feed.name }));
           } catch (e) {
             clearTimeout(timer);
