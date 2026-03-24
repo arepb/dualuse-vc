@@ -1523,7 +1523,6 @@
       { name: "C4ISRNET",        url: "https://www.c4isrnet.com/arc/outboundfeeds/rss/" },
       { name: "THE WAR ZONE",    url: "https://www.twz.com/feed" },
       { name: "SOF WEEK",        url: "https://sofweek.org/feed/" },
-      { name: "SBIR / STTR",     url: "https://api.sbir.gov/public/api/awards?rows=8&start=0&sortField=awardDate&sortDir=DESC&agency=DOD", type: "json" },
     ];
 
     const CACHE_KEY = "dualuse_news_cache_v5";
@@ -1572,32 +1571,6 @@
           }).filter(a => a.title && a.link);
         };
 
-        const parseSBIR = (raw) => {
-          if (!raw) return [];
-          try {
-            let str = raw;
-            if (typeof str === "string" && str.startsWith("data:")) {
-              const bytes = Uint8Array.from(atob(str.split(",")[1]), c => c.charCodeAt(0));
-              str = new TextDecoder("utf-8").decode(bytes);
-            }
-            const awards = JSON.parse(str);
-            const list = Array.isArray(awards) ? awards : (awards.data || awards.awards || []);
-            return list.slice(0, 6).map(a => {
-              const title = (a.award_title || a.awardsTitle || a.title || "SBIR Award").trim();
-              const company = (a.company || a.firm || a.awardee || "").trim();
-              const branch = (a.branch || a.agency || "").trim();
-              const label = [branch, company].filter(Boolean).join(" · ");
-              const id = a.award_id || a.awardId || a.id || "";
-              const link = id
-                ? `https://www.sbir.gov/sbirsearch/award/detail/${id}`
-                : "https://www.sbir.gov/awards";
-              const rawDate = a.award_date || a.awardDate || a.date || "";
-              const date = rawDate ? new Date(rawDate) : new Date(0);
-              return { title: label ? `${title} — ${label}` : title, link, date };
-            }).filter(a => a.title && a.link);
-          } catch(e) { return []; }
-        };
-
         const tryProxy = async (url, parseRes, timeoutMs) => {
           const controller = new AbortController();
           const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -1617,8 +1590,7 @@
             8000
           );
           if (!raw) return [];
-          const articles = feed.type === "json" ? parseSBIR(raw) : parseXML(raw);
-          return articles.map(a => ({ ...a, source: feed.name }));
+          return parseXML(raw).map(a => ({ ...a, source: feed.name }));
         };
 
         const MAX_AGE = 60 * 24 * 60 * 60 * 1000; // 60 days
