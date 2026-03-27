@@ -2,15 +2,17 @@
 
 > Tracking venture capital investment in dual-use defense tech startups.
 
-Dual Use (dualuse.vc) is a live tracker of the defense tech startup ecosystem — venture capital funds, startups, funding rounds, and defense prime partnerships. Data is updated weekly.
+Dual Use (dualuse.vc) is a live tracker of the defense tech startup ecosystem — venture capital funds, startups, funding rounds, open jobs, and defense prime partnerships. Data is updated weekly.
 
 ## Sections
 
-- [Overview](https://dualuse.vc/): Market stats ($49.1B in 2025 defense tech VC funding), live news feed from Defense One, Breaking Defense, Defense News, and C4ISRNET, and a ranked list of the biggest funding rounds.
-- [VC Funds](https://dualuse.vc/): 25 venture capital funds actively investing in defense tech, including Andreessen Horowitz, Founders Fund, In-Q-Tel, Shield Capital, Lux Capital, and Trucks Venture Capital.
-- [Startups](https://dualuse.vc/): 100 dual-use defense tech startups with valuations, total raised, key investors, defense prime partners, and dual-use/commercial application summaries.
-- [Funding Rounds](https://dualuse.vc/): Major funding rounds with amounts, lead investors, valuations, and dates.
-- [Defense Primes](https://dualuse.vc/): 8 defense prime contractors (Lockheed Martin, RTX, Boeing, Northrop Grumman, L3Harris, General Dynamics, BAE Systems, SAIC) and their startup venture arms and partnerships.
+- [Overview](https://dualuse.vc/): Market stats ($49.1B in 2025 defense tech VC funding), live Signals news feed from Defense One, Breaking Defense, Defense News, C4ISRNET, The War Zone, and SOF Week, open roles preview, and a ranked list of the biggest funding rounds.
+- [VC Funds](https://dualuse.vc/#funds): 25 venture capital funds actively investing in defense tech, including Andreessen Horowitz, Founders Fund, In-Q-Tel, Shield Capital, Lux Capital, and Trucks Venture Capital.
+- [Startups](https://dualuse.vc/#startups): 100 dual-use defense tech startups with valuations, total raised, key investors, defense prime partners, and dual-use/commercial application summaries.
+- [Jobs](https://dualuse.vc/#jobs): Live open roles from 25+ defense tech companies fetched directly from Greenhouse and Ashby job boards. Updated in real time.
+- [Funding Rounds](https://dualuse.vc/#funding): Major funding rounds with amounts, lead investors, valuations, and dates.
+- [Defense Primes](https://dualuse.vc/#primes): 8 defense prime contractors (Lockheed Martin, RTX, Boeing, Northrop Grumman, L3Harris, General Dynamics, BAE Systems, SAIC) and their startup venture arms and partnerships.
+- [About](https://dualuse.vc/#about): About the site, data methodology, and contact information.
 
 ## Key facts
 
@@ -21,8 +23,19 @@ Dual Use (dualuse.vc) is a live tracker of the defense tech startup ecosystem �
 
 ## Notable companies tracked
 
-Anduril Industries ($30.5B), Palantir Technologies (public), Shield AI ($5.6B), SpaceX ($350B+), Applied Intuition, Skydio, Joby Aviation (public), Archer Aviation (public, NYSE: ACHR), Beta Technologies (public, NYSE: BETA), Rocket Lab (public, NASDAQ: RKLB), Scale AI ($29B), Havoc, Saronic, True Anomaly, Firestorm, MACH Industries, JetZero, Skyryse ($1.15B), Auriga Space, and 81 more.
+Anduril Industries ($60B, Series H Mar 2026), Shield AI ($12.7B, Series G Mar 2026), Palantir Technologies (public, NYSE: PLTR), SpaceX ($350B+), Applied Intuition ($15B), Skydio, Joby Aviation (public, NYSE: JOBY), Archer Aviation (public, NYSE: ACHR), Beta Technologies (public, NYSE: BETA), Rocket Lab (public, NASDAQ: RKLB), Scale AI ($29B), Saronic ($4B), Vast ($20B+), Skyryse ($1.15B), JetZero ($1B+), Havoc, True Anomaly, Firestorm, MACH Industries, Auriga Space, and 80 more.
+
+## Recent large funding rounds (2025-2026)
+
+- Anduril Industries: $4B Series H at $60B (Mar 2026)
+- Shield AI: $1.5B Series G at $12.7B (Mar 2026)
+- Vast: $500M Series A at $20B+ (Mar 2026)
+- Sierra Space: $550M Series C at $8B (Mar 2026)
+- Chaos Industries: $510M Growth at $4.5B (Nov 2025)
+- Saronic: $600M Series C at $4B (Feb 2025)
+- Applied Intuition: $600M Series E at $15B (Jun 2025)
+- Skyryse: $300M+ Series C at $1.15B (Jan 2026)
 
 ## About
 
-Dual Use is an independent tracker. Data is compiled from Crunchbase, PitchBook, public filings, and news reports. Updated weekly via automated scan.
+Dual Use is an independent tracker. Data is compiled from public filings, news reports, and company announcements. Updated weekly via automated scan. Contact: covington@dualuse.vc
