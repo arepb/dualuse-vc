@@ -42,7 +42,7 @@
     "url": "https://dualuse.vc",
     "description": "Tracking venture capital investment in dual-use defense tech startups. 100 companies, 25 VC funds, live news, and funding rounds — updated weekly.",
     "inLanguage": "en-US",
-    "dateModified": "2026-03-27",
+    "dateModified": "2026-04-08",
     "publisher": {
       "@type": "Organization",
       "name": "Dual Use",
@@ -69,7 +69,7 @@
     "description": "Comprehensive dataset of 100 dual-use defense tech startups, 25 VC funds, funding rounds, and defense prime partnerships. Updated weekly.",
     "url": "https://dualuse.vc",
     "inLanguage": "en-US",
-    "dateModified": "2026-03-27",
+    "dateModified": "2026-04-08",
     "license": "https://dualuse.vc/#about",
     "creator": {
       "@type": "Organization",
@@ -403,10 +403,10 @@
       },
       {
         id: 5, name: "Saronic", founded: 2022, hq: "Austin, TX",
-        valuation: "$4B+", totalRaised: "$900M+", ceo: "Dino Mavrookas", domain: "saronic.com",
+        valuation: "$9.25B", totalRaised: "$2.65B+", ceo: "Dino Mavrookas", domain: "saronic.com",
         description: "Builds autonomous surface vessels from 6 to 150 feet including Marauder MUSV, Spyglass, Cutlass, Corsair, Mirage, and Cipher platforms. U.S. Navy $392M+ OTA contract.",
         sectors: ["Autonomous Systems", "Maritime", "Robotics"],
-        investors: ["Andreessen Horowitz (a16z)", "Point72 Ventures", "General Catalyst", "8VC", "Caffeinated Capital"],
+        investors: ["Andreessen Horowitz (a16z)", "Point72 Ventures", "General Catalyst", "8VC", "Caffeinated Capital", "Kleiner Perkins", "Advent International", "Bessemer Venture Partners", "DFJ Growth", "BAM Elevate"],
         primePartners: [],
         dualUse: "Autonomous naval patrol, mine countermeasures, anti-submarine warfare",
         commercialUse: "Maritime logistics, port security, oceanographic research"
@@ -472,9 +472,9 @@
         commercialUse: "Wireless power, EV charging, grid management"
       },
       {
-        id: 12, name: "Hermeus", founded: 2018, hq: "Atlanta, GA",
-        valuation: "$1B+", totalRaised: "$300M+", ceo: "AJ Piplica", domain: "hermeus.com",
-        description: "Developing hypersonic aircraft. Flew first supersonic-capable Quarterhorse Mk 2.1 in March 2026. Working toward Mach 5. Building Darkhorse for the Air Force.",
+        id: 12, name: "Hermeus", founded: 2018, hq: "El Segundo, CA",
+        valuation: "$1B", totalRaised: "$500M+", ceo: "AJ Piplica", domain: "hermeus.com",
+        description: "Developing hypersonic aircraft. Flew first supersonic-capable Quarterhorse Mk 2.1 in March 2026. Working toward Mach 5. Building Darkhorse for the Air Force. Raised $350M Series C (Apr 2026) led by Khosla Ventures.",
         sectors: ["Hypersonics", "Aerospace"],
         investors: ["RTX Ventures", "Khosla Ventures", "Sam Altman", "MilVet Angels"],
         primePartners: ["RTX"],
@@ -836,10 +836,10 @@
       },
       {
         id: 48, name: "Xona Space Systems", founded: 2018, hq: "San Mateo, CA",
-        valuation: "$200M+", totalRaised: "$50M+", ceo: "Brian Manning", domain: "xonaspace.com",
-        description: "Commercial GPS alternative navigation constellation (PULSAR). 300x more accurate than GPS. DoD partner for GPS-denied navigation. Air Force Research Laboratory partner.",
+        valuation: "Undisclosed (Series C, Mar 2026)", totalRaised: "$220M+", ceo: "Brian Manning", domain: "xonaspace.com",
+        description: "Commercial GPS alternative navigation constellation (PULSAR). 100x stronger signals than GPS, military-grade encryption. $170M Series C (Mar 2026) led by Mohari Ventures Natural Capital. Full 258-satellite LEO constellation targeted; early coverage expected 2027. DoD and Air Force Research Laboratory partner.",
         sectors: ["Space", "Communications", "Sensors/ISR"],
-        investors: ["Lockheed Martin Ventures", "DCVC"],
+        investors: ["Mohari Ventures Natural Capital", "Lockheed Martin Ventures", "DCVC", "Craft Ventures", "ICONIQ", "Woven Capital", "NGP Capital", "Samsung Next", "Hexagon"],
         primePartners: ["Lockheed Martin"],
         dualUse: "GPS-denied military navigation, jam-resistant positioning for DoD",
         commercialUse: "Precision agriculture, autonomous vehicle navigation, surveying"
@@ -1378,9 +1378,10 @@
     ];
 
     const FUNDING_ROUNDS = [
-      { company: "Shield AI", round: "Series G", amount: "$1.5B", date: "Mar 2026", leadInvestor: "Advent International / JPMorgan Chase", valuation: "$12.7B" },
       { company: "Anduril Industries", round: "Series H", amount: "$4B", date: "Mar 2026", leadInvestor: "Thrive Capital / Andreessen Horowitz", valuation: "$60B" },
       { company: "Anduril Industries", round: "Series G", amount: "$2.5B", date: "Summer 2025", leadInvestor: "Founders Fund", valuation: "$30.5B" },
+      { company: "Saronic", round: "Series D", amount: "$1.75B", date: "Mar 2026", leadInvestor: "Kleiner Perkins", valuation: "$9.25B" },
+      { company: "Shield AI", round: "Series G", amount: "$1.5B", date: "Mar 2026", leadInvestor: "Advent International / JPMorgan Chase", valuation: "$12.7B" },
       { company: "Anduril Industries", round: "Series F", amount: "$1.5B", date: "Aug 2024", leadInvestor: "Founders Fund / Sands Capital", valuation: "$14B" },
       { company: "Commonwealth Fusion", round: "Series B2", amount: "$863M", date: "2025", leadInvestor: "Multiple", valuation: "$5B+" },
       { company: "Helsing", round: "Series D", amount: "~$694M", date: "Summer 2025", leadInvestor: "Undisclosed", valuation: "$12B+" },
@@ -1390,16 +1391,13 @@
       { company: "Chaos Industries", round: "Growth", amount: "$510M", date: "Nov 2025", leadInvestor: "Valor Equity Partners", valuation: "$4.5B" },
       { company: "Vast", round: "Series A", amount: "$500M", date: "Mar 2026", leadInvestor: "Balerion Space Ventures", valuation: "$20B+" },
       { company: "Helsing", round: "Series C", amount: "~$489M", date: "Jul 2024", leadInvestor: "General Catalyst", valuation: "$5.4B" },
-      { company: "Skyryse", round: "Series C", amount: "$300M+", date: "Jan 2026", leadInvestor: "Fidelity", valuation: "$1.15B" },
       { company: "Castelion", round: "Series B", amount: "$350M", date: "2025", leadInvestor: "Undisclosed", valuation: "$1B+" },
+      { company: "Hermeus", round: "Series C", amount: "$350M", date: "Apr 2026", leadInvestor: "Khosla Ventures", valuation: "$1B" },
+      { company: "Skyryse", round: "Series C", amount: "$300M+", date: "Jan 2026", leadInvestor: "Fidelity", valuation: "$1.15B" },
       { company: "Chaos Industries", round: "Series C", amount: "$275M", date: "Sep 2025", leadInvestor: "Accel", valuation: "$4.5B" },
       { company: "Hadrian", round: "Series C", amount: "$260M", date: "Jul 2025", leadInvestor: "Founders Fund / Lux Capital", valuation: "$2B+" },
       { company: "Forterra", round: "Series C", amount: "$238M", date: "Nov 2025", leadInvestor: "Moore Strategic Ventures", valuation: "$1B+" },
-      { company: "Onebrief", round: "Series D", amount: "$200M", date: "Jan 2026", leadInvestor: "Battery Ventures / Sapphire Ventures", valuation: "$2.15B" },
-      { company: "Saronic", round: "Series B", amount: "$175M", date: "2024", leadInvestor: "Andreessen Horowitz", valuation: "$1B" },
-      { company: "JetZero", round: "Series B", amount: "$175M", date: "Jan 2026", leadInvestor: "B Capital, Trucks Venture Capital", valuation: "$1B+" },
-      { company: "Skydio", round: "Series E ext.", amount: "$170M", date: "Nov 2024", leadInvestor: "Undisclosed", valuation: "$2.2B" },
-      { company: "Defense Unicorns", round: "Series B", amount: "$136M", date: "Jan 2026", leadInvestor: "Bain Capital", valuation: "$1B+" },
+      { company: "Harmattan AI", round: "Series B", amount: "$200M", date: "Jan 2026", leadInvestor: "Dassault Aviation", valuation: "$1.4B" },
     ];
 
     const DEFENSE_PRIMES = [
