@@ -3032,20 +3032,32 @@
             if (cached?.length) { setTotal(cached.length); setJobs(pickFeatured(cached)); return; }
           }
         } catch(e) {}
-        // Mini-fetch from 6 diverse companies if no cache
+        // Mini-fetch from diverse companies if no cache
         const quickSources = [
-          { company: "Dragos",           slug: "dragos",          domain: "dragos.com",          ats: "gh" },
-          { company: "Shift5",           slug: "shift5",          domain: "shift5.io",           ats: "gh" },
-          { company: "Ursa Major",       slug: "ursamajor",       domain: "ursamajor.com",       ats: "gh" },
-          { company: "Slingshot Aerospace", slug: "slingshotaerospace", domain: "slingshot.space", ats: "gh" },
-          { company: "Skyryse",          slug: "skyryse",         domain: "skyryse.com",         ats: "gh" },
-          { company: "Vannevar Labs",    slug: "vannevarlabs",    domain: "vannevarlabs.com",    ats: "gh" },
+          { company: "Anduril Industries", slug: "andurilindustries", domain: "anduril.com",     ats: "gh" },
+          { company: "Dragos",             slug: "dragos",            domain: "dragos.com",       ats: "gh" },
+          { company: "Ursa Major",         slug: "ursamajor",         domain: "ursamajor.com",    ats: "gh" },
+          { company: "Slingshot Aerospace",slug: "slingshotaerospace",domain: "slingshot.space",  ats: "gh" },
+          { company: "Shield AI",          slug: "shieldai",          domain: "shield.ai",        ats: "lever" },
+          { company: "Hermeus",            slug: "hermeus",           domain: "hermeus.com",      ats: "lever" },
+          { company: "Saronic",            slug: "saronic",           domain: "saronic.com",      ats: "ashby" },
+          { company: "Hadrian",            slug: "hadrian-automation",domain: "hadrian.co",       ats: "ashby" },
         ];
         Promise.allSettled(quickSources.map(async src => {
           const ctrl = new AbortController(); setTimeout(() => ctrl.abort(), 6000);
-          const r = await fetch(`https://boards-api.greenhouse.io/v1/boards/${src.slug}/jobs`, { signal: ctrl.signal });
-          const data = await r.json();
-          return (data.jobs || []).map(j => ({ company: src.company, domain: src.domain, title: j.title, url: j.absolute_url, location: j.location?.name || "—", type: categorizeJob(j.title) }));
+          if (src.ats === "gh") {
+            const r = await fetch(`https://boards-api.greenhouse.io/v1/boards/${src.slug}/jobs`, { signal: ctrl.signal });
+            const data = await r.json();
+            return (data.jobs || []).map(j => ({ company: src.company, domain: src.domain, title: j.title, url: j.absolute_url, location: j.location?.name || "—", type: categorizeJob(j.title) }));
+          } else if (src.ats === "ashby") {
+            const r = await fetch(`https://api.ashbyhq.com/posting-api/job-board/${src.slug}`, { signal: ctrl.signal });
+            const data = await r.json();
+            return (data.jobPostings || []).map(j => ({ company: src.company, domain: src.domain, title: j.title, url: j.jobUrl, location: j.isRemote ? "Remote" : (j.locationName || "—"), type: categorizeJob(j.title) }));
+          } else {
+            const r = await fetch(`https://api.lever.co/v0/postings/${src.slug}?mode=json`, { signal: ctrl.signal });
+            const data = await r.json();
+            return (Array.isArray(data) ? data : []).map(j => ({ company: src.company, domain: src.domain, title: j.text, url: j.hostedUrl, location: j.categories?.location || "—", type: categorizeJob(j.text) }));
+          }
         })).then(results => {
           const all = results.flatMap(r => r.status === "fulfilled" ? r.value : []);
           setTotal(all.length); setJobs(pickFeatured(all));
@@ -3417,64 +3429,39 @@
       { company: "Spire Global",            slug: "spire",                 domain: "spire.com" },
       { company: "JetZero",                 slug: "jetzero",               domain: "jetzero.aero" },
       { company: "Relativity Space",        slug: "relativity",            domain: "relativityspace.com" },
-      // ── Autonomous systems & drones ──
-      { company: "Anduril Industries",      slug: "anduril",               domain: "anduril.com" },
-      { company: "Shield AI",               slug: "shieldai",              domain: "shield.ai" },
-      { company: "Joby Aviation",           slug: "jobyaviation",          domain: "jobyaviation.com" },
-      { company: "Skydweller Aero",         slug: "skydweller",            domain: "skydweller.com" },
-      { company: "Forterra",                slug: "forterra",              domain: "forterra.com" },
-      { company: "Elroy Air",               slug: "elroyair",              domain: "elroyair.com" },
-      { company: "Zipline",                 slug: "zipline",               domain: "flyzipline.com" },
+      // ── Autonomous systems ──
+      { company: "Anduril Industries",      slug: "andurilindustries",     domain: "anduril.com" },
       { company: "XWing",                   slug: "xwing",                 domain: "x.wing" },
-      { company: "Overland AI",             slug: "overlandai",            domain: "overland.ai" },
-      { company: "DroneShield",             slug: "droneshield",           domain: "dronesheild.com" },
       { company: "Auterion",                slug: "auterion",              domain: "auterion.com" },
-      { company: "Aurora Innovation",       slug: "aurora",                domain: "aurora.tech" },
+      { company: "Aurora Innovation",       slug: "aurorainnovation",      domain: "aurora.tech" },
       { company: "Torc Robotics",           slug: "torcrobotics",          domain: "torc.ai" },
+      { company: "Skydweller Aero",         slug: "skydweller",            domain: "skydweller.com" },
       // ── Space ──
-      { company: "Axiom Space",             slug: "axiomspace",            domain: "axiomspace.com" },
-      { company: "Sierra Space",            slug: "sierraspace",           domain: "sierraspace.com" },
+      { company: "Axiom Space",             slug: "axiomco",               domain: "axiomspace.com" },
       { company: "Vast",                    slug: "vast",                  domain: "vastspace.com" },
-      { company: "LeoLabs",                 slug: "leolabs",               domain: "leolabs.space" },
-      { company: "ABL Space Systems",       slug: "ablspacesystems",       domain: "ablspacesystems.com" },
-      { company: "Firefly Aerospace",       slug: "fireflyspace",          domain: "firefly.com" },
-      { company: "Stoke Space",             slug: "stokespace",            domain: "stokespace.com" },
-      { company: "Astroscale",              slug: "astroscale",            domain: "astroscale.com" },
-      { company: "Impulse Space",           slug: "impulsespace",          domain: "impulsespace.com" },
-      { company: "Albedo",                  slug: "albedo",                domain: "albedo.com" },
-      { company: "K2 Space",                slug: "k2space",               domain: "k2space.com" },
+      { company: "Stoke Space",             slug: "stokespacetechnologies", domain: "stokespace.com" },
       { company: "Astranis",                slug: "astranis",              domain: "astranis.com" },
-      { company: "True Anomaly",            slug: "trueanomaly",           domain: "trueanomaly.space" },
-      { company: "Starfish Space",          slug: "starfishspace",         domain: "starfishspace.com" },
-      { company: "HawkEye 360",             slug: "hawkeye360",            domain: "he360.com" },
+      { company: "True Anomaly",            slug: "trueanomalyinc",        domain: "trueanomaly.space" },
       { company: "Privateer Space",         slug: "privateer",             domain: "privateer.com" },
+      { company: "Varda Space Industries",  slug: "vardaspace",            domain: "varda.com" },
+      { company: "Zipline",                 slug: "flyzipline",            domain: "flyzipline.com" },
+      { company: "Oklo",                    slug: "oklo",                  domain: "oklo.com" },
       // ── Cyber & software ──
-      { company: "Claroty",                 slug: "claroty",               domain: "claroty.com" },
       { company: "Nozomi Networks",         slug: "nozominetworks",        domain: "nozominetworks.com" },
       { company: "SpyCloud",                slug: "spycloud",              domain: "spycloud.com" },
       { company: "Expel",                   slug: "expel",                 domain: "expel.io" },
       { company: "Virtru",                  slug: "virtru",                domain: "virtru.com" },
-      { company: "Paladin Capital Group",   slug: "paladincapital",        domain: "paladincapgroup.com" },
-      { company: "Accrete AI",              slug: "accreteai",             domain: "accrete.ai" },
       { company: "SandboxAQ",              slug: "sandboxaq",             domain: "sandboxaq.com" },
-      { company: "Windward",                slug: "windward",              domain: "windward.ai" },
       { company: "Exiger",                  slug: "exiger",                domain: "exiger.com" },
-      // ── Advanced air mobility ──
-      { company: "Beta Technologies",       slug: "beta-technologies",     domain: "beta.team" },
+      { company: "Chaos Industries",        slug: "chaosindustries",       domain: "chaosindustries.com" },
+      { company: "Defense Unicorns",        slug: "defenseunicorns",       domain: "defenseunicorns.com" },
+      { company: "Echodyne",                slug: "echodynecorp",          domain: "echodyne.com" },
+      { company: "Armis",                   slug: "armissecurity",         domain: "armis.com" },
+      { company: "Altana",                  slug: "altanaai",              domain: "altana.ai" },
+      { company: "Latent AI",               slug: "latentai",              domain: "latentai.com" },
+      // ── Aerospace & energy ──
       { company: "Boom Supersonic",         slug: "boomsupersonic",        domain: "boomsupersonic.com" },
-      { company: "Electra.aero",            slug: "electraaero",           domain: "electra.aero" },
-      { company: "Hermeus",                 slug: "hermeus",               domain: "hermeus.com" },
-      { company: "Castelion",               slug: "castelion",             domain: "castelion.com" },
-      { company: "Venus Aerospace",         slug: "venusaerospace",        domain: "venusaero.com" },
-      { company: "REGENT Craft",            slug: "regentcraft",           domain: "regentcraft.com" },
-      // ── Energy & manufacturing ──
-      { company: "Commonwealth Fusion",     slug: "cfs",                   domain: "cfs.energy" },
-      { company: "Oklo",                    slug: "oklo",                  domain: "oklo.com" },
-      { company: "Radiant Nuclear",         slug: "radiant",               domain: "radiantnuclear.com" },
-      { company: "Evolv Technology",        slug: "evolvtechnology",       domain: "evolvtechnology.com" },
       { company: "SparkCognition",          slug: "sparkcognition",        domain: "sparkcognition.com" },
-      { company: "Govini",                  slug: "govini",                domain: "govini.com" },
-      { company: "Nominal",                 slug: "nominal",               domain: "nominal.io" },
     ];
 
     const JOB_SOURCES_ASHBY = [
@@ -3484,27 +3471,32 @@
       { company: "Gecko Robotics",          slug: "gecko-robotics",        domain: "geckorobotics.com" },
       { company: "Reliable Robotics",       slug: "reliable-robotics",     domain: "reliable.aero" },
       { company: "Primer AI",               slug: "primer",                domain: "primer.ai" },
-      // ── Additional Ashby companies ──
-      { company: "Hadrian",                 slug: "hadrian",               domain: "hadrian.co" },
-      { company: "Varda Space Industries",  slug: "varda",                 domain: "varda.com" },
-      { company: "Chaos Industries",        slug: "chaos-industries",      domain: "chaosindustries.com" },
-      { company: "Anzu Robotics",           slug: "anzu-robotics",         domain: "anzurobotic.com" },
-      { company: "Firestorm Labs",          slug: "firestorm",             domain: "launchfirestorm.com" },
-      { company: "MACH Industries",         slug: "mach-industries",       domain: "machindustries.co" },
-      { company: "Havoc",                   slug: "havoc",                 domain: "havocai.com" },
-      { company: "Machina Labs",            slug: "machinalabs",           domain: "machinalabs.ai" },
-      { company: "Overland AI",             slug: "overland-ai",           domain: "overland.ai" },
-      { company: "Fortem Technologies",     slug: "fortem-technologies",   domain: "fortemtech.com" },
-      { company: "Ghost Robotics",          slug: "ghost-robotics",        domain: "ghostrobotics.io" },
-      { company: "Defense Unicorns",        slug: "defense-unicorns",      domain: "defenseunicorns.com" },
-      { company: "Merlin Labs",             slug: "merlin-labs",           domain: "merlinlabs.com" },
-      { company: "Red 6",                   slug: "red-6",                 domain: "red6ar.com" },
-      { company: "Echodyne",                slug: "echodyne",              domain: "echodyne.com" },
-      { company: "Armis",                   slug: "armis",                 domain: "armis.com" },
-      { company: "Altana",                  slug: "altana",                domain: "altana.ai" },
-      { company: "Orca AI",                 slug: "orca-ai",               domain: "orca.ai" },
-      { company: "Cognitive Space",         slug: "cognitive-space",       domain: "cognitivespace.com" },
-      { company: "Latent AI",               slug: "latent-ai",             domain: "latentai.com" },
+      // ── Verified Ashby companies ──
+      { company: "Hadrian",                 slug: "hadrian-automation",    domain: "hadrian.co" },
+      { company: "MACH Industries",         slug: "mach",                  domain: "machindustries.co" },
+      { company: "Havoc",                   slug: "havocai",               domain: "havocai.com" },
+      { company: "Red 6",                   slug: "Red6",                  domain: "red6ar.com" },
+      { company: "K2 Space",                slug: "K2space",               domain: "k2space.com" },
+      { company: "Radiant Nuclear",         slug: "radiant-industries",    domain: "radiantnuclear.com" },
+    ];
+
+    // Lever API: https://api.lever.co/v0/postings/{slug}?mode=json
+    const JOB_SOURCES_LEVER = [
+      { company: "Shield AI",               slug: "shieldai",              domain: "shield.ai" },
+      { company: "Elroy Air",               slug: "elroyair",              domain: "elroyair.com" },
+      { company: "LeoLabs",                 slug: "leolabs-2",             domain: "leolabs.space" },
+      { company: "ABL Space Systems",       slug: "ablspacesystems",       domain: "ablspacesystems.com" },
+      { company: "Firefly Aerospace",       slug: "fireflyon",             domain: "firefly.com" },
+      { company: "Albedo",                  slug: "albedo",                domain: "albedo.com" },
+      { company: "Beta Technologies",       slug: "beta",                  domain: "beta.team" },
+      { company: "Hermeus",                 slug: "hermeus",               domain: "hermeus.com" },
+      { company: "Venus Aerospace",         slug: "venusaero",             domain: "venusaero.com" },
+      { company: "REGENT Craft",            slug: "Regentcraft",           domain: "regentcraft.com" },
+      { company: "Commonwealth Fusion",     slug: "cfsenergy",             domain: "cfs.energy" },
+      { company: "Govini",                  slug: "govini",                domain: "govini.com" },
+      { company: "Nominal",                 slug: "nominal",               domain: "nominal.io" },
+      { company: "Machina Labs",            slug: "MachinaLabs",           domain: "machinalabs.ai" },
+      { company: "Merlin Labs",             slug: "merlinlabs",            domain: "merlinlabs.com" },
     ];
 
     const PRIME_LINKS = [
@@ -3517,7 +3509,7 @@
       { company: "General Dynamics", url: "https://gdmissionsystems.com/careers",     domain: "gd.com" },
     ];
 
-    const JOBS_CACHE_KEY = "dualuse_jobs_cache";
+    const JOBS_CACHE_KEY = "dualuse_jobs_cache_v2";
     const JOBS_CACHE_TTL = 4 * 60 * 60 * 1000;
 
     function categorizeJob(title) {
@@ -3570,7 +3562,17 @@
               return (data.jobPostings || []).map(j => ({ company: src.company, domain: src.domain, title: j.title, url: j.jobUrl, location: j.isRemote ? "Remote" : (j.locationName || "—"), type: categorizeJob(j.title) }));
             } catch(e) { return []; }
           });
-          const results = await Promise.allSettled([...ghFetches, ...ashbyFetches]);
+          const leverFetches = JOB_SOURCES_LEVER.map(async src => {
+            try {
+              const ctrl = new AbortController();
+              const t = setTimeout(() => ctrl.abort(), 8000);
+              const r = await fetch(`https://api.lever.co/v0/postings/${src.slug}?mode=json`, { signal: ctrl.signal });
+              clearTimeout(t);
+              const data = await r.json();
+              return (Array.isArray(data) ? data : []).map(j => ({ company: src.company, domain: src.domain, title: j.text, url: j.hostedUrl, location: j.categories?.location || j.categories?.allLocations?.[0] || "—", type: categorizeJob(j.text) }));
+            } catch(e) { return []; }
+          });
+          const results = await Promise.allSettled([...ghFetches, ...ashbyFetches, ...leverFetches]);
           const all = results.flatMap(r => r.status === "fulfilled" ? r.value : []).filter(j => j.title && j.url);
           // Round-robin interleave: one job per company per pass — avoids single-company domination
           const byCompany = {};
